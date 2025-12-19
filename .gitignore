@@ -1,0 +1,19 @@
+# Build artifacts
+dist-newstyle
+cabal.project.freeze
+result
+
+# Generated files
+.pre-commit-config.yaml
+validator.uplc
+
+# Keep blueprint folder but ignore generated JSON
+blueprints/*.json
+
+# Editor
+.vscode/
+*.swp
+*~
+
+# Nix
+.direnv/
