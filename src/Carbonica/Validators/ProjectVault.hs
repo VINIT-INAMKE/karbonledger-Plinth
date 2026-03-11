@@ -87,6 +87,46 @@ PHASE 4 OPTIMIZATIONS:
             Cause: Not enough multisig signatures
             Fix: Provide required number of multisig signatures
 
+   PVE013 - Vote count not incremented by exactly 1
+            Cause: output (pdYesVotes + pdNoVotes) != input (pdYesVotes + pdNoVotes) + 1
+            Fix: Exactly one vote must be added per transaction
+
+   PVE014 - Voter not added to voters list
+            Cause: output pdVoters length != input pdVoters length + 1
+            Fix: Ensure voter PKH is added to pdVoters
+
+   PVE015 - Project name mutated
+            Cause: output pdProjectName != input pdProjectName
+            Fix: Non-vote fields must be preserved
+
+   PVE016 - Developer address mutated
+            Cause: output pdDeveloper != input pdDeveloper
+            Fix: Non-vote fields must be preserved
+
+   PVE017 - COT amount mutated
+            Cause: output pdCotAmount != input pdCotAmount
+            Fix: Non-vote fields must be preserved
+
+   PVE018 - Project status mutated
+            Cause: output pdStatus != input pdStatus
+            Fix: Status must remain unchanged during voting
+
+   PVE019 - Category mutated
+            Cause: output pdCategory != input pdCategory
+            Fix: Non-vote fields must be preserved
+
+   PVE020 - Description mutated
+            Cause: output pdDescription != input pdDescription
+            Fix: Non-vote fields must be preserved
+
+   PVE021 - Submission time mutated
+            Cause: output pdSubmittedAt != input pdSubmittedAt
+            Fix: Non-vote fields must be preserved
+
+   PVE022 - No valid continuing output
+            Cause: zero or multiple continuing outputs, or datum extraction failed
+            Fix: Exactly one output must continue to script with valid ProjectDatum
+
    ══════════════════════════════════════════════════════════════════════════
 -}
 
@@ -94,12 +134,15 @@ module Carbonica.Validators.ProjectVault where
 
 import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  Datum (..),
+                                                 POSIXTime,
                                                  ScriptContext (..),
                                                  ScriptInfo (..),
                                                  TokenName (..),
                                                  TxInfo (..),
+                                                 TxOut (..),
                                                  TxOutRef,
                                                  getRedeemer)
+import           PlutusLedgerApi.V3.Contexts   (getContinuingOutputs)
 import           PlutusLedgerApi.V3.MintValue   (mintValueMinted)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
@@ -111,15 +154,19 @@ import           Carbonica.Types.Config         (Multisig (..),
 import           Carbonica.Types.Project        (ProjectDatum,
                                                  ProjectStatus (..),
                                                  ProjectVaultRedeemer (..),
-                                                 pdVoters,
-                                                 pdStatus,
-                                                 pdYesVotes,
+                                                 pdCategory,
+                                                 pdCotAmount,
+                                                 pdDescription,
+                                                 pdDeveloper,
                                                  pdNoVotes,
                                                  pdProjectName,
-                                                 pdDeveloper,
-                                                 pdCotAmount)
+                                                 pdStatus,
+                                                 pdSubmittedAt,
+                                                 pdVoters,
+                                                 pdYesVotes)
 import           Carbonica.Validators.Common    (anySignerInList,
                                                  countMatching,
+                                                 extractDatum,
                                                  findConfigDatum,
                                                  getTotalForPolicy,
                                                  payoutTokenExact)
@@ -209,6 +256,7 @@ typedValidator idNftPolicy projectPolicy ctx =
         P.&& P.traceIfFalse "PVE005" voterInMultisig
         P.&& P.traceIfFalse "PVE006" notAlreadyVoted
         P.&& P.traceIfFalse "PVE007" isSubmitted
+        P.&& P.traceIfFalse "PVE022" outputDatumValid
         where
           {-# INLINE multisigSigners #-}
           multisigSigners = msSigners (cdMultisig configDatum)
@@ -229,6 +277,36 @@ typedValidator idNftPolicy projectPolicy ctx =
 
           {-# INLINE isSubmitted #-}
           isSubmitted = pdStatus projectDatum P.== ProjectSubmitted
+
+          -- CRIT-01 FIX: Verify the continuing output datum matches expected state transition.
+          -- Uses total-count approach: pdYesVotes out + pdNoVotes out == pdYesVotes in + pdNoVotes in + 1
+          -- This enforces exactly one vote is added without needing to know vote direction,
+          -- since VaultVote carries no Vote payload.
+          {-# INLINE continuingOutputDatum #-}
+          continuingOutputDatum :: P.Maybe ProjectDatum
+          continuingOutputDatum = case getContinuingOutputs ctx of
+            [o] -> extractDatum o
+            _   -> P.Nothing
+
+          outputDatumValid :: Bool
+          outputDatumValid = case continuingOutputDatum of
+            P.Nothing -> False
+            P.Just outDatum ->
+              -- Vote count incremented by exactly 1 (total, direction-agnostic)
+              P.traceIfFalse "PVE013"
+                (pdYesVotes outDatum P.+ pdNoVotes outDatum
+                 P.== pdYesVotes projectDatum P.+ pdNoVotes projectDatum P.+ 1)
+              -- Voter added to voters list (length +1)
+              P.&& P.traceIfFalse "PVE014"
+                (P.length (pdVoters outDatum) P.== P.length (pdVoters projectDatum) P.+ 1)
+              -- Immutable fields unchanged
+              P.&& P.traceIfFalse "PVE015" (pdProjectName outDatum P.== pdProjectName projectDatum)
+              P.&& P.traceIfFalse "PVE016" (pdDeveloper outDatum P.== pdDeveloper projectDatum)
+              P.&& P.traceIfFalse "PVE017" (pdCotAmount outDatum P.== pdCotAmount projectDatum)
+              P.&& P.traceIfFalse "PVE018" (pdStatus outDatum P.== pdStatus projectDatum)
+              P.&& P.traceIfFalse "PVE019" (pdCategory outDatum P.== pdCategory projectDatum)
+              P.&& P.traceIfFalse "PVE020" (pdDescription outDatum P.== pdDescription projectDatum)
+              P.&& P.traceIfFalse "PVE021" (pdSubmittedAt outDatum P.== pdSubmittedAt projectDatum)
 
       --------------------------------------------------------------------------------
       -- APPROVE VALIDATION
