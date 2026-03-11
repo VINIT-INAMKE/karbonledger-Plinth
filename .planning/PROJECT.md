@@ -24,14 +24,14 @@ Every validator must enforce complete authorization and datum integrity checks s
 ### Active
 
 - [ ] Fix all 14 identified vulnerabilities across all severity levels
-- [ ] Add on-chain emulator tests for attack scenarios
+- [ ] Add comprehensive Tasty test suite with attack scenario tests
+- [ ] Apply best Haskell practices throughout entire codebase (not just fixes)
 - [ ] Ensure no single multisig member can unilaterally manipulate platform state
 
 ### Out of Scope
 
-- New features or protocol changes — this is purely security hardening
+- New features or protocol changes — this is security hardening + code quality
 - Off-chain code / frontend changes — validators only
-- Performance optimization beyond what's needed for fixes
 - UserVault VaultWithdraw implementation — separate feature work
 
 ## Context

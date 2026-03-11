@@ -304,7 +304,8 @@ isInList x (y:ys) = x P.== y P.|| isInList x ys
 -- Useful for checking if any transaction signer is in an authorized list.
 {-# INLINEABLE anySignerInList #-}
 anySignerInList :: P.Eq a => [a] -> [a] -> Bool
-anySignerInList signers list = P.any (\s -> isInList s list) signers
+anySignerInList [] _list = False
+anySignerInList (s:ss) list = isInList s list P.|| anySignerInList ss list
 
 --------------------------------------------------------------------------------
 -- VALUE HELPERS (token counting and validation)

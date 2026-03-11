@@ -191,7 +191,6 @@ Reject: no_votes >= 3, project NFT burned
 ```
 
 ---
-
 ## 🔄 Complete System Workflow
 
 ### Workflow 1: Emission Reporting & Offsetting

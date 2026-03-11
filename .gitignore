@@ -16,4 +16,6 @@ blueprints/*.json
 *~
 
 # Nix
-.direnv/
+.direnv/.planning/
+.planning 
+.claude
