@@ -219,7 +219,9 @@ typedValidator idNftPolicy projectPolicy ctx =
           existingVoters = pdVoters projectDatum
 
           {-# INLINE voterSigned #-}
-          voterSigned = P.not (P.null signatories)
+          voterSigned = case signatories of
+            [] -> False
+            _  -> True
 
           {-# INLINE voterInMultisig #-}
           voterInMultisig = anySignerInList signatories multisigSigners

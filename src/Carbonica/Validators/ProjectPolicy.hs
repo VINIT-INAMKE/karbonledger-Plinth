@@ -70,7 +70,6 @@ PHASE 4 OPTIMIZATIONS:
 module Carbonica.Validators.ProjectPolicy where
 
 import           PlutusLedgerApi.V3             (Address (..),
-                                                 BuiltinByteString,
                                                  Credential (..),
                                                  CurrencySymbol (..),
                                                  Datum (..),
@@ -83,7 +82,7 @@ import           PlutusLedgerApi.V3             (Address (..),
                                                  TxOut (..),
                                                  getRedeemer)
 import           PlutusLedgerApi.V3.MintValue   (mintValueMinted)
-import           PlutusLedgerApi.V1.Value       (Value, valueOf, flattenValue, Lovelace (..), lovelaceValueOf)
+import           PlutusLedgerApi.V1.Value       (valueOf, Lovelace (..), lovelaceValueOf)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 

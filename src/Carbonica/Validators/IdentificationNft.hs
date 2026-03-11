@@ -44,7 +44,7 @@ import           GHC.Generics                (Generic)
 import           PlutusLedgerApi.V3          (CurrencySymbol,
                                               ScriptContext (..),
                                               ScriptInfo (..), TokenName (..),
-                                              TxInInfo (..), TxInfo (..),
+                                              TxInfo (..),
                                               TxOutRef (..),
                                               getRedeemer)
 import           PlutusLedgerApi.V3.MintValue (mintValueMinted)
