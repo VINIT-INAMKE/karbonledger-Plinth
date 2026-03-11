@@ -5,14 +5,13 @@ Description : Tests for Carbonica type definitions
 module Test.Carbonica.Types (typeTests) where
 
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (testCase, assertEqual, assertBool)
+import Test.Tasty.HUnit (testCase, assertBool)
 
 import qualified PlutusTx.Prelude as P
 
 import Carbonica.Types.Config
 import Carbonica.Types.Governance
 import Carbonica.Types.Project
-import Carbonica.Types.Emission
 
 --------------------------------------------------------------------------------
 -- TYPE TESTS

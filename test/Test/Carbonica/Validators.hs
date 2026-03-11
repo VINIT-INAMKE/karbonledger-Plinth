@@ -17,13 +17,11 @@ import qualified PlutusTx.Prelude as P
 
 import Carbonica.Validators.Common
   ( isInList
-  , countMatching
   , validateMultisig
   , hasSingleTokenWithName
   , allNegative
   , sumQty
   , isCategorySupported
-  , getTokensForPolicy
   )
 
 --------------------------------------------------------------------------------
@@ -254,12 +252,7 @@ emissionTests = testGroup "Emission Tracking"
       -- The validator uses getTokensForPolicy to inspect CET tokens.
       -- Verify that getTokensForPolicy correctly filters for a specific policy,
       -- which is how the validator isolates CET tokens in the vault.
-      let cetPolicy = CurrencySymbol "cet_policy"
-          otherPolicy = CurrencySymbol "other"
-          -- Construct a Value with both CET and other tokens.
-          -- getTokensForPolicy works on Value; we test allNegative on its result
-          -- to verify burn detection patterns used by the vault.
-          cetTokens = [(TokenName "cet_1", -5), (TokenName "cet_2", -3)]
+      let cetTokens = [(TokenName "cet_1", -5), (TokenName "cet_2", -3)]
       in assertBool "all CET tokens must have negative quantities for valid burn"
            (allNegative cetTokens)
 
