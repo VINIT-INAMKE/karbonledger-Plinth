@@ -54,6 +54,18 @@ PHASE 4 OPTIMIZATIONS:
             Cause: Expected exactly 1 COT token OR CET != COT quantities
             Fix: Ensure single COT token and quantities match CET
 
+   CPE009 - Project not approved
+            Cause: pdStatus != ProjectApproved
+            Fix: Only approved projects can have COT minted
+
+   CPE010 - COT amount mismatch with project datum
+            Cause: minted COT amount != pdCotAmount from ProjectDatum
+            Fix: Minted amount must exactly match the datum-specified COT amount
+
+   CPE011 - COT quantity not positive
+            Cause: expectedCotAmount (from datum) <= 0
+            Fix: Project must specify a positive COT amount
+
    ══════════════════════════════════════════════════════════════════════════
 -}
 
@@ -79,7 +91,10 @@ import           Carbonica.Types.Config         (ConfigDatum,
                                                  cdCetPolicyId,
                                                  cdMultisig,
                                                  identificationTokenName)
-import           Carbonica.Types.Project        (ProjectDatum)
+import           Carbonica.Types.Project        (ProjectDatum,
+                                                 ProjectStatus (..),
+                                                 pdCotAmount,
+                                                 pdStatus)
 import           Carbonica.Validators.Common    (extractDatum,
                                                  findConfigDatum,
                                                  findInputByOutRef,
@@ -101,18 +116,6 @@ data CotRedeemer = CotRedeemer
   deriving anyclass (HasBlueprintDefinition)
 
 PlutusTx.makeIsDataSchemaIndexed ''CotRedeemer [('CotRedeemer, 0)]
-
---------------------------------------------------------------------------------
--- HELPER FUNCTIONS
---------------------------------------------------------------------------------
-
--- | Check if a TxOut contains a ProjectDatum
-{-# INLINEABLE hasProjectDatum #-}
-hasProjectDatum :: TxInInfo -> Bool
-hasProjectDatum txIn =
-  case extractDatum (txInInfoResolved txIn) of
-    P.Just (_ :: ProjectDatum) -> True
-    P.Nothing -> False
 
 --------------------------------------------------------------------------------
 -- VALIDATOR
@@ -172,21 +175,39 @@ typedValidator cfgNft valMint ctx =
       validateMintWithProject :: CurrencySymbol -> Bool
       validateMintWithProject policy =
         P.traceIfFalse "CPE003" projectInputValid
+        P.&& P.traceIfFalse "CPE009" projectApproved
         P.&& P.traceIfFalse "CPE004" (sumTokensByPolicy mnt valMint P.< 0)
-        P.&& P.traceIfFalse "CPE005" cotAmountValid
-        P.&& P.traceIfFalse "CPE009" cotQuantityPositive
+        P.&& P.traceIfFalse "CPE010" cotAmountValid
+        P.&& P.traceIfFalse "CPE011" cotQuantityPositive
         P.&& P.traceIfFalse "CPE006" (validateMultisig sgs (msSigners multisig) (msRequired multisig))
         where
-          projectInputValid = case findInputByOutRef inps (cotOref red) of
-            P.Nothing -> False
-            P.Just txIn -> hasProjectDatum txIn
+          -- Extract ProjectDatum from the project input
+          maybeProjectDatum :: P.Maybe ProjectDatum
+          maybeProjectDatum = case findInputByOutRef inps (cotOref red) of
+            P.Nothing -> P.Nothing
+            P.Just txIn -> extractDatum (txInInfoResolved txIn)
 
-          -- Verify COT minted amount matches redeemer (fungible token check)
-          expectedCotAmount = cotAmount red
+          projectInputValid :: Bool
+          projectInputValid = case maybeProjectDatum of
+            P.Nothing -> False
+            P.Just _  -> True
+
+          -- CRIT-04 FIX: Verify project is approved before allowing mint
+          projectApproved :: Bool
+          projectApproved = case maybeProjectDatum of
+            P.Nothing -> False
+            P.Just pd -> pdStatus pd P.== ProjectApproved
+
+          -- CRIT-04 FIX: Use datum amount, NOT redeemer amount
+          expectedCotAmount :: Integer
+          expectedCotAmount = case maybeProjectDatum of
+            P.Nothing -> 0
+            P.Just pd -> pdCotAmount pd
+
           actualCotAmount = getMintedAmountForToken mnt policy (cotTkn red)
           cotAmountValid = actualCotAmount P.== expectedCotAmount
 
-          -- Ensure positive quantity for minting
+          -- Ensure positive quantity for minting (renamed from CPE009 to CPE011)
           cotQuantityPositive = expectedCotAmount P.> 0
 
       {-# INLINEABLE validateBurn #-}
