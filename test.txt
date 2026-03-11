@@ -1,0 +1,114 @@
+Build profile: -w ghc-9.6.6 -O1
+In order, the following will be built (use -v for more details):
+ - smartcontracts-0.1.0.0 (test:carbonica-tests) (first run)
+Preprocessing test suite 'carbonica-tests' for smartcontracts-0.1.0.0...
+Building test suite 'carbonica-tests' for smartcontracts-0.1.0.0...
+Running 1 test suites...
+Test suite carbonica-tests: RUNNING...
+Carbonica Tests
+  Type Tests
+    Config Types
+      identificationTokenName is correct:                        OK
+    Governance Types
+      Vote values are distinct:                                  OK
+      ProposalState values are distinct:                         OK
+      ProposalState equality is reflexive:                       OK
+    Project Types
+      ProjectStatus values are distinct:                         OK
+      ProjectStatus equality is reflexive:                       OK
+  Validator Logic Tests
+    Identification NFT
+      One-shot principle: UTxO consumption required:             OK
+      Mint exactly 1 token enforced:                             OK
+      Mint exactly 1 token rejected for 2 tokens:                OK
+      Burn exactly 1 token enforced:                             OK
+    Config Holder
+      Requires DAO proposal for spending:                        OK
+      Config spending rejected without enough DAO signers:       OK
+      ID NFT must remain in output:                              OK
+    DAO Governance
+      Voting requires signer:                                    OK
+      Voting rejected when signer absent:                        OK
+      Double voting prevented:                                   OK
+      Quorum check: 3 of 5 required:                             OK
+      Quorum not reached with 2 votes:                           OK
+      Deadline enforcement required:                             OK
+      Deadline not yet passed:                                   OK
+    Project Flow
+      Project submission requires signer:                        OK
+      Project submission rejected without signer:                OK
+      Project approval requires quorum:                          OK
+      Project rejection on no quorum:                            OK
+      COT minting tied to project approval:                      OK
+      COT minting rejected for unsupported category:             OK
+    Emission Tracking
+      CET minting requires signer:                               OK
+      CET minting rejected without signer:                       OK
+      CET burning requires COT burning:                          OK
+      CET/COT burn mismatch detected:                            OK
+      User vault is non-transferable:                            OK
+      Offset requires owner signature:                           OK
+      Offset rejected without owner signature:                   OK
+  Common Helper Tests
+    List Helpers
+      isInList finds element present in list:                    OK
+      isInList returns False for absent element:                 OK
+      isInList returns False for empty list:                     OK
+      countMatching counts correct number of matches:            OK
+      countMatching returns 0 for no matches:                    OK
+      countMatching handles empty first list:                    OK
+      anySignerInList returns True when at least one match:      OK
+      anySignerInList returns False when no match:               OK
+    Multisig Validation
+      validateMultisig passes with exactly required signers:     OK
+      validateMultisig passes with more than required:           OK
+      validateMultisig fails with fewer than required:           OK
+      validateMultisig fails with 0 signers:                     OK
+      validateMultisig ignores unauthorized signers:             OK
+    Value Helpers
+      sumQty sums positive integers correctly:                   OK
+      sumQty returns 0 for empty list:                           OK
+      sumQty handles mix of positive and negative:               OK
+      allNegative returns True for all-negative list:            OK
+      allNegative returns False if any non-negative:             OK
+      allNegative returns True for empty list:                   OK
+      isCategorySupported finds category in list:                OK
+      isCategorySupported returns False for absent category:     OK
+      isCategorySupported returns False for empty category list: OK
+    Common Helper Properties
+      sumQty of singleton is identity:                           OK
+        +++ OK, passed 100 tests.
+      sumQty of two elements is commutative:                     OK
+        +++ OK, passed 100 tests.
+      validateMultisig with 0 required always passes:            OK
+        +++ OK, passed 100 tests.
+      allNegative rejects list with any zero:                    OK
+        +++ OK, passed 100 tests.
+  Property-Based Tests (QuickCheck)
+    Lovelace Smart Constructor Properties
+      Positive lovelace accepted:                                OK
+        +++ OK, passed 100 tests.
+      Zero lovelace accepted:                                    OK
+        +++ OK, passed 100 tests.
+      Negative lovelace rejected:                                OK
+        +++ OK, passed 100 tests.
+      Non-negative amounts accepted:                             OK
+        +++ OK, passed 100 tests.
+    CotAmount Smart Constructor Properties
+      Positive COT amount accepted:                              OK
+        +++ OK, passed 100 tests.
+      Zero COT amount accepted:                                  OK
+        +++ OK, passed 100 tests.
+      Negative COT amount rejected:                              OK
+        +++ OK, passed 100 tests.
+      CotAmount preserves value:                                 OK
+        +++ OK, passed 100 tests.
+      Non-negative COT amounts accepted:                         OK
+        +++ OK, passed 100 tests.
+
+All 68 tests passed (0.01s)
+
+Test suite carbonica-tests: PASS
+Test suite logged to:
+/home/vinit/code/karbonledger-Plinth/././dist-newstyle/build/x86_64-linux/ghc-9.6.6/smartcontracts-0.1.0.0/t/carbonica-tests/test/smartcontracts-0.1.0.0-carbonica-tests.log
+1 of 1 test suites (1 of 1 test cases) passed.

@@ -12,7 +12,7 @@ This roadmap transforms the Carbonica smart contract platform from a state with 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Code Quality Foundation** - Consolidate shared helpers, standardize error handling, set up test framework
+- [x] **Phase 1: Code Quality Foundation** - Consolidate shared helpers, standardize error handling, set up test framework (completed 2026-03-11)
 - [ ] **Phase 2: Critical Vulnerability Fixes** - Patch the 4 critical vulns: datum verification, auth bypass, config integrity, mint validation
 - [ ] **Phase 3: High Vulnerability Fixes** - Fix NFT destination, trivial signer checks, governance auth gaps; add critical attack tests
 - [ ] **Phase 4: Medium and Low Fixes** - Harden marketplace validation, governance vote integrity, document disabled features
@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Every validator uses error codes (not string messages) following the established prefix convention (CHE, DGE, PVE, PPE, CPE, plus new prefixes for CetPolicy, UserVault, Marketplace)
   3. All exported helper functions have consistent INLINEABLE pragmas and follow PlutusTx patterns used by the existing codebase
   4. Running `cabal test` executes a Tasty test suite with tasty-hunit and tasty-quickcheck, and all existing tests still pass
-**Plans:** 3/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 01-01-PLAN.md -- Consolidate helpers: migrate Utils.hs into Common.hs, remove all local duplicates, delete Utils.hs
@@ -104,7 +104,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Code Quality Foundation | 3/3 | Complete | 2026-03-11 |
+| 1. Code Quality Foundation | 3/3 | Complete    | 2026-03-11 |
 | 2. Critical Vulnerability Fixes | 0/0 | Not started | - |
 | 3. High Vulnerability Fixes | 0/0 | Not started | - |
 | 4. Medium and Low Fixes | 0/0 | Not started | - |
