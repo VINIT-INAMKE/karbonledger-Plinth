@@ -7,10 +7,10 @@
 
 ### Critical Fixes
 
-- [ ] **CRIT-01**: ProjectVault vote must verify continuing output datum (vote count +1, voter added, all other fields unchanged)
+- [x] **CRIT-01**: ProjectVault vote must verify continuing output datum (vote count +1, voter added, all other fields unchanged)
 - [x] **CRIT-02**: DaoGovernance mint must verify submitter is in multisig group (replace trivial hasSigner)
 - [x] **CRIT-03**: DaoGovernance verifyConfigUpdate must verify all non-target ConfigDatum fields remain unchanged
-- [ ] **CRIT-04**: CotPolicy mint must verify project status is Approved and minted COT matches pdCotAmount
+- [x] **CRIT-04**: CotPolicy mint must verify project status is Approved and minted COT matches pdCotAmount
 
 ### High Fixes
 
@@ -65,10 +65,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CRIT-01 | Phase 2 | Pending |
+| CRIT-01 | Phase 2 | Complete |
 | CRIT-02 | Phase 2 | Complete |
 | CRIT-03 | Phase 2 | Complete |
-| CRIT-04 | Phase 2 | Pending |
+| CRIT-04 | Phase 2 | Complete |
 | HIGH-01 | Phase 3 | Pending |
 | HIGH-02 | Phase 3 | Pending |
 | HIGH-03 | Phase 3 | Pending |
