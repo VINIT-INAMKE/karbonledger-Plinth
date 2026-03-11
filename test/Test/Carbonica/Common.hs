@@ -16,6 +16,7 @@ import Test.Tasty.QuickCheck (testProperty)
 import PlutusLedgerApi.V3 (PubKeyHash (..), TokenName (..))
 import qualified PlutusTx.Prelude as P
 
+import Carbonica.Types.Config (Multisig (..))
 import Carbonica.Validators.Common
   ( isInList
   , countMatching
@@ -34,6 +35,7 @@ commonTests :: TestTree
 commonTests = testGroup "Common Helper Tests"
   [ listHelperTests
   , multisigTests
+  , multisigEqualityTests
   , valueHelperTests
   , propertyBasedTests
   ]
@@ -133,6 +135,37 @@ multisigTests = testGroup "Multisig Validation"
           [PubKeyHash "a", PubKeyHash "b", PubKeyHash "x", PubKeyHash "y"]
           [PubKeyHash "a", PubKeyHash "b", PubKeyHash "c"]
           2)
+  ]
+
+--------------------------------------------------------------------------------
+-- MULTISIG EQUALITY (P.Eq instance)
+--------------------------------------------------------------------------------
+
+multisigEqualityTests :: TestTree
+multisigEqualityTests = testGroup "Multisig Equality (P.Eq)"
+  [ testCase "equal multisigs return True" $
+      assertBool "same required and signers"
+        (Multisig 3 [PubKeyHash "a", PubKeyHash "b", PubKeyHash "c"]
+         P.== Multisig 3 [PubKeyHash "a", PubKeyHash "b", PubKeyHash "c"])
+
+  , testCase "different msRequired returns False" $
+      assertBool "different required threshold"
+        (P.not (Multisig 2 [PubKeyHash "a", PubKeyHash "b"]
+                P.== Multisig 3 [PubKeyHash "a", PubKeyHash "b"]))
+
+  , testCase "different msSigners returns False" $
+      assertBool "different signer list"
+        (P.not (Multisig 2 [PubKeyHash "a", PubKeyHash "b"]
+                P.== Multisig 2 [PubKeyHash "a", PubKeyHash "c"]))
+
+  , testCase "empty signers list equality" $
+      assertBool "both empty"
+        (Multisig 0 [] P.== Multisig 0 [])
+
+  , testCase "different length signers returns False" $
+      assertBool "different number of signers"
+        (P.not (Multisig 1 [PubKeyHash "a"]
+                P.== Multisig 1 [PubKeyHash "a", PubKeyHash "b"]))
   ]
 
 --------------------------------------------------------------------------------
