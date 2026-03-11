@@ -94,7 +94,10 @@ import           Carbonica.Types.Config         (cdCategories,
 import           Carbonica.Types.Project        (ProjectDatum,
                                                  pdCategory,
                                                  ProjectMintRedeemer (..))
-import           Carbonica.Validators.Common    (findConfigDatum)
+import           Carbonica.Validators.Common    (allNegative,
+                                                 findConfigDatum,
+                                                 getTokensForPolicy,
+                                                 isCategorySupported)
 
 --------------------------------------------------------------------------------
 -- VALIDATOR LOGIC
@@ -240,7 +243,7 @@ typedValidator idNftPolicy ctx =
           ownTokens = getTokensForPolicy mintedValue ownPolicy
 
           {-# INLINE allBurned #-}
-          allBurned = allQtysNegative ownTokens
+          allBurned = allNegative ownTokens
 
   -- ═══════════════════════════════════════════════════════════════
   -- PHASE 4: Main entry point
@@ -255,16 +258,6 @@ typedValidator idNftPolicy ctx =
     -- HELPER FUNCTIONS (all INLINEABLE for optimization)
     -- ═══════════════════════════════════════════════════════════════
 
-    {-# INLINEABLE getTokensForPolicy #-}
-    getTokensForPolicy :: Value -> CurrencySymbol -> [(TokenName, Integer)]
-    getTokensForPolicy val policy =
-      [(tkn, qty) | (cs, tkn, qty) <- flattenValue val, cs P.== policy]
-
-    {-# INLINEABLE allQtysNegative #-}
-    allQtysNegative :: [(TokenName, Integer)] -> Bool
-    allQtysNegative [] = True
-    allQtysNegative ((_, qty):rest) = qty P.< 0 P.&& allQtysNegative rest
-
     -- Find project output with NFT and extract ProjectDatum
     {-# INLINEABLE findProjectOutput #-}
     findProjectOutput :: [TxOut] -> CurrencySymbol -> TokenName -> P.Maybe (TxOut, ProjectDatum)
@@ -277,12 +270,6 @@ typedValidator idNftPolicy ctx =
             P.Nothing -> findProjectOutput os policy tkn
           _ -> findProjectOutput os policy tkn
         else findProjectOutput os policy tkn
-
-    -- Check if category is in supported list
-    {-# INLINEABLE isCategorySupported #-}
-    isCategorySupported :: BuiltinByteString -> [BuiltinByteString] -> Bool
-    isCategorySupported _ [] = False
-    isCategorySupported cat (c:cs) = cat P.== c P.|| isCategorySupported cat cs
 
     -- Verify fee payment to fee address (exact amount)
     {-# INLINEABLE verifyFeePayment #-}

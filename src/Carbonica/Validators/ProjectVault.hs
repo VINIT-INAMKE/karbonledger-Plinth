@@ -92,20 +92,17 @@ PHASE 4 OPTIMIZATIONS:
 
 module Carbonica.Validators.ProjectVault where
 
-import           PlutusLedgerApi.V3             (Address (..),
-                                                 Credential (..),
-                                                 CurrencySymbol (..),
+import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  Datum (..),
                                                  PubKeyHash,
                                                  ScriptContext (..),
                                                  ScriptInfo (..),
                                                  TokenName (..),
                                                  TxInfo (..),
-                                                 TxOut (..),
                                                  TxOutRef,
                                                  getRedeemer)
 import           PlutusLedgerApi.V3.MintValue   (mintValueMinted)
-import           PlutusLedgerApi.V1.Value       (Value, valueOf, flattenValue)
+import           PlutusLedgerApi.V1.Value       (Value)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
@@ -123,7 +120,11 @@ import           Carbonica.Types.Project        (ProjectDatum,
                                                  pdProjectName,
                                                  pdDeveloper,
                                                  pdCotAmount)
-import           Carbonica.Validators.Common    (findConfigDatum)
+import           Carbonica.Validators.Common    (anySignerInList,
+                                                 countMatching,
+                                                 findConfigDatum,
+                                                 getTotalForPolicy,
+                                                 payoutTokenExact)
 
 --------------------------------------------------------------------------------
 -- VALIDATOR LOGIC
@@ -218,7 +219,7 @@ typedValidator idNftPolicy projectPolicy ctx =
           existingVoters = pdVoters projectDatum
 
           {-# INLINE voterSigned #-}
-          voterSigned = hasSigners signatories
+          voterSigned = P.not (P.null signatories)
 
           {-# INLINE voterInMultisig #-}
           voterInMultisig = anySignerInList signatories multisigSigners
@@ -257,18 +258,19 @@ typedValidator idNftPolicy projectPolicy ctx =
           projectTokenName = TokenName (pdProjectName projectDatum)
 
           {-# INLINE projectBurned #-}
-          projectBurned = getTokensBurnedForPolicy mintedValue projectPolicy P.< 0
+          projectBurned = getTotalForPolicy mintedValue projectPolicy P.< 0
 
           {-# INLINE developerPaid #-}
           developerPaid =
-            verifyPaymentToAddress outputs (pdDeveloper projectDatum)
+            payoutTokenExact (pdDeveloper projectDatum)
               (CurrencySymbol (cdCotPolicyId configDatum))
               projectTokenName
               (pdCotAmount projectDatum)
+              outputs
 
           {-# INLINE multisigSatisfied #-}
           multisigSatisfied =
-            countMatchingSigners signatories (msSigners (cdMultisig configDatum))
+            countMatching signatories (msSigners (cdMultisig configDatum))
               P.>= msRequired (cdMultisig configDatum)
 
       --------------------------------------------------------------------------------
@@ -294,11 +296,11 @@ typedValidator idNftPolicy projectPolicy ctx =
           hasRejectionQuorum = noVotes P.>= requiredVotes
 
           {-# INLINE projectBurned #-}
-          projectBurned = getTokensBurnedForPolicy mintedValue projectPolicy P.< 0
+          projectBurned = getTotalForPolicy mintedValue projectPolicy P.< 0
 
           {-# INLINE multisigSatisfied #-}
           multisigSatisfied =
-            countMatchingSigners signatories (msSigners (cdMultisig configDatum))
+            countMatching signatories (msSigners (cdMultisig configDatum))
               P.>= msRequired (cdMultisig configDatum)
 
   -- ═══════════════════════════════════════════════════════════════
@@ -311,60 +313,6 @@ typedValidator idNftPolicy projectPolicy ctx =
         P.Nothing -> P.traceError "PVE001"
         P.Just projectDatum -> validateSpend oref projectDatum
     _ -> P.traceError "PVE000"
-  where
-
-    -- ═══════════════════════════════════════════════════════════════
-    -- HELPER FUNCTIONS (all INLINEABLE for optimization)
-    -- ═══════════════════════════════════════════════════════════════
-
-    hasSigners :: [PubKeyHash] -> Bool
-    hasSigners [] = False
-    hasSigners _  = True
-    {-# INLINEABLE hasSigners #-}
-
-    anySignerInList :: [PubKeyHash] -> [PubKeyHash] -> Bool
-    anySignerInList [] _ = False
-    anySignerInList (s:ss) list = isInList s list P.|| anySignerInList ss list
-    {-# INLINEABLE anySignerInList #-}
-
-    isInList :: PubKeyHash -> [PubKeyHash] -> Bool
-    isInList _ []     = False
-    isInList x (y:ys) = x P.== y P.|| isInList x ys
-    {-# INLINEABLE isInList #-}
-
-    countMatchingSigners :: [PubKeyHash] -> [PubKeyHash] -> Integer
-    countMatchingSigners [] _ = 0
-    countMatchingSigners (s:ss) multisig =
-      if isInList s multisig
-        then 1 P.+ countMatchingSigners ss multisig
-        else countMatchingSigners ss multisig
-    {-# INLINEABLE countMatchingSigners #-}
-
-    -- Sum burned tokens for a policy (negative = burned)
-    getTokensBurnedForPolicy :: Value -> CurrencySymbol -> Integer
-    getTokensBurnedForPolicy val policy =
-      sumQty [qty | (cs, _, qty) <- flattenValue val, cs P.== policy]
-    {-# INLINEABLE getTokensBurnedForPolicy #-}
-
-    sumQty :: [Integer] -> Integer
-    sumQty []     = 0
-    sumQty (x:xs) = x P.+ sumQty xs
-    {-# INLINEABLE sumQty #-}
-
-    -- Verify exact payment to a PubKeyHash address
-    -- Verify developer receives exact COT payment
-    verifyPaymentToAddress :: [TxOut] -> PubKeyHash -> CurrencySymbol -> TokenName -> Integer -> Bool
-    verifyPaymentToAddress [] _ _ _ _ = False
-    verifyPaymentToAddress (o:os) pkh policy tkn expectedAmt =
-      let addr = txOutAddress o
-          matchesPkh = case addressCredential addr of
-            PubKeyCredential pk -> pk P.== pkh
-            _                   -> False
-          tokenAmt = valueOf (txOutValue o) policy tkn
-      in if matchesPkh P.&& tokenAmt P.== expectedAmt
-           then True
-           else verifyPaymentToAddress os pkh policy tkn expectedAmt
-    {-# INLINEABLE verifyPaymentToAddress #-}
 
 --------------------------------------------------------------------------------
 -- COMPILED VALIDATOR

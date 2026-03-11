@@ -10,6 +10,34 @@ looking for this NFT.
 One-shot pattern: The policy is parameterized by a specific TxOutRef.
 Once that UTxO is spent to mint the NFT, it can never be minted again.
 -}
+
+{- ══════════════════════════════════════════════════════════════════════════
+   ERROR CODE REGISTRY - IdentificationNft Validator
+   ══════════════════════════════════════════════════════════════════════════
+
+   INE000 - Invalid script context
+            Cause: Not a minting context
+            Fix: Ensure script is used as minting policy
+
+   INE001 - Redeemer parse failed
+            Cause: Redeemer bytes don't deserialize to IdNftRedeemer
+            Fix: Verify redeemer structure matches IdNftRedeemer schema
+
+   INE002 - Must consume oref
+            Cause: The parameterized UTxO is not present in inputs
+            Fix: Include the one-shot UTxO as a transaction input
+
+   INE003 - Must mint exactly 1 token
+            Cause: Minting 0 or more than 1 identification NFT
+            Fix: Mint exactly 1 token with the identification token name
+
+   INE004 - Must burn exactly 1 token
+            Cause: Not burning exactly 1 identification NFT
+            Fix: Burn exactly 1 token with the identification token name
+
+   ══════════════════════════════════════════════════════════════════════════
+-}
+
 module Carbonica.Validators.IdentificationNft where
 
 import           GHC.Generics                (Generic)
@@ -26,6 +54,7 @@ import           PlutusTx.Blueprint
 import qualified PlutusTx.Prelude            as P
 
 import           Carbonica.Types.Config      (identificationTokenName)
+import           Carbonica.Validators.Common (findInputByOutRef)
 
 --------------------------------------------------------------------------------
 -- REDEEMER
@@ -63,14 +92,14 @@ typedValidator oref ctx = case scriptInfo of
   MintingScript ownPolicy -> case redeemer of
     IdMint -> mintCheck ownPolicy
     IdBurn -> burnCheck ownPolicy
-  _ -> P.traceError "Expected minting context"
+  _ -> P.traceError "INE000"
   where
     ScriptContext txInfo rawRedeemer scriptInfo = ctx
 
     -- Parse redeemer
     redeemer :: IdNftRedeemer
     redeemer = case PlutusTx.fromBuiltinData (getRedeemer rawRedeemer) of
-      P.Nothing -> P.traceError "Failed to parse redeemer"
+      P.Nothing -> P.traceError "INE001"
       P.Just r  -> r
 
     -- Token name as proper TokenName type
@@ -80,22 +109,18 @@ typedValidator oref ctx = case scriptInfo of
 
     -- Check: consuming the specific UTxO (one-shot guarantee)
     consumingOref :: Bool
-    consumingOref = hasInput oref (txInfoInputs txInfo)
+    consumingOref = case findInputByOutRef (txInfoInputs txInfo) oref of
+      P.Nothing -> False
+      P.Just _  -> True
     {-# INLINEABLE consumingOref #-}
-
-    -- Helper to check if oref is in inputs
-    hasInput :: TxOutRef -> [TxInInfo] -> Bool
-    hasInput _ []       = False
-    hasInput ref (i:is) = txInInfoOutRef i P.== ref P.|| hasInput ref is
-    {-# INLINEABLE hasInput #-}
 
     -- Check: minting exactly 1 token with correct name
     mintCheck :: CurrencySymbol -> Bool
     mintCheck ownPolicy =
       let mintedValue = mintValueMinted (txInfoMint txInfo)  -- Convert MintValue to Value
           amount = valueOf mintedValue ownPolicy tokenName
-      in P.traceIfFalse "Must consume oref" consumingOref
-         P.&& P.traceIfFalse "Must mint exactly 1 token" (amount P.== 1)
+      in P.traceIfFalse "INE002" consumingOref
+         P.&& P.traceIfFalse "INE003" (amount P.== 1)
     {-# INLINEABLE mintCheck #-}
 
     -- Check: burning exactly 1 token
@@ -103,7 +128,7 @@ typedValidator oref ctx = case scriptInfo of
     burnCheck ownPolicy =
       let mintedValue = mintValueMinted (txInfoMint txInfo)
           amount = valueOf mintedValue ownPolicy tokenName
-      in P.traceIfFalse "Must burn exactly 1 token" (amount P.== (-1))
+      in P.traceIfFalse "INE004" (amount P.== (-1))
     {-# INLINEABLE burnCheck #-}
 
 --------------------------------------------------------------------------------

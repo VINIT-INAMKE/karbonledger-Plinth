@@ -21,6 +21,42 @@ VALIDATION LOGIC:
     - Owner can withdraw their asset
     - Requires owner signature
 -}
+
+{- ══════════════════════════════════════════════════════════════════════════
+   ERROR CODE REGISTRY - Marketplace Validator
+   ══════════════════════════════════════════════════════════════════════════
+
+   MKE000 - Invalid script context
+            Cause: Not a spending context with inline datum
+            Fix: Ensure UTxO has inline datum and is being spent
+
+   MKE001 - Datum parse failed
+            Cause: Datum bytes don't deserialize to MarketplaceDatum
+            Fix: Verify datum structure matches MarketplaceDatum schema
+
+   MKE002 - Redeemer parse failed
+            Cause: Redeemer bytes don't deserialize to MarketplaceRedeemer
+            Fix: Verify redeemer is MktBuy or MktWithdraw
+
+   MKE003 - Seller not paid
+            Cause: Seller PKH not receiving at least payout amount
+            Fix: Ensure seller output exists with sufficient lovelace
+
+   MKE004 - Platform not paid
+            Cause: Royalty address not receiving at least royalty amount
+            Fix: Ensure platform royalty output exists with sufficient lovelace
+
+   MKE005 - Buyer not receiving COT
+            Cause: No output to buyer with the listed COT tokens
+            Fix: Ensure buyer receives the listed COT quantity
+
+   MKE006 - Owner must sign
+            Cause: Listing owner PKH not in transaction signatories
+            Fix: Owner must sign the withdrawal transaction
+
+   ══════════════════════════════════════════════════════════════════════════
+-}
+
 module Carbonica.Validators.Marketplace where
 
 import           GHC.Generics                   (Generic)
@@ -35,10 +71,13 @@ import           PlutusLedgerApi.V3             (Address (..),
                                                  TxInfo (..),
                                                  TxOut (..),
                                                  getRedeemer)
-import           PlutusLedgerApi.V1.Value       (Lovelace (..), lovelaceValueOf, valueOf)
+import           PlutusLedgerApi.V1.Value       (valueOf)
 import           PlutusTx
 import           PlutusTx.Blueprint
 import qualified PlutusTx.Prelude               as P
+
+import           Carbonica.Validators.Common    (isInList,
+                                                 payoutAtLeast)
 
 --------------------------------------------------------------------------------
 -- DATUM AND REDEEMER
@@ -124,16 +163,16 @@ typedValidator :: CurrencySymbol -> PubKeyHash -> ScriptContext -> Bool
 typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
   SpendingScript _oref (Just (Datum datumData)) ->
     case PlutusTx.fromBuiltinData datumData of
-      P.Nothing -> P.traceError "Marketplace: Failed to parse MarketplaceDatum"
+      P.Nothing -> P.traceError "MKE001"
       P.Just mktDatum -> validateSpend mktDatum
-  _ -> P.traceError "Marketplace: Expected spending context with datum"
+  _ -> P.traceError "MKE000"
   where
     ScriptContext txInfo rawRedeemer scriptInfo = ctx
 
     -- Parse redeemer
     redeemer :: MarketplaceRedeemer
     redeemer = case PlutusTx.fromBuiltinData (getRedeemer rawRedeemer) of
-      P.Nothing -> P.traceError "Marketplace: Failed to parse redeemer"
+      P.Nothing -> P.traceError "MKE002"
       P.Just r  -> r
 
     outputs :: [TxOut]
@@ -161,9 +200,9 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
     --------------------------------------------------------------------------------
     validateBuy :: MarketplaceDatum -> Bool
     validateBuy mktDatum =
-      P.traceIfFalse "Marketplace: Seller not paid" sellerPaid
-      P.&& P.traceIfFalse "Marketplace: Platform not paid" platformPaid
-      P.&& P.traceIfFalse "Marketplace: Buyer not receiving COT" buyerReceivesCot
+      P.traceIfFalse "MKE003" sellerPaid
+      P.&& P.traceIfFalse "MKE004" platformPaid
+      P.&& P.traceIfFalse "MKE005" buyerReceivesCot
       where
         salePrice = mdAmount mktDatum
 
@@ -192,7 +231,7 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
         buyerReceivesCot :: Bool
         buyerReceivesCot = case findBuyer signatories sellerPkh of
           P.Nothing -> False  -- No buyer found
-          P.Just buyerPkh -> 
+          P.Just buyerPkh ->
             hasTokenPayment buyerPkh (mdCotPolicy mktDatum) (mdCotToken mktDatum) (mdCotQty mktDatum) outputs
     {-# INLINEABLE validateBuy #-}
 
@@ -203,34 +242,15 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
     --------------------------------------------------------------------------------
     validateWithdraw :: MarketplaceDatum -> Bool
     validateWithdraw mktDatum =
-      P.traceIfFalse "Marketplace: Owner must sign" ownerSigned
+      P.traceIfFalse "MKE006" ownerSigned
       where
         ownerPkh = walletPkh (mdOwner mktDatum)
-        ownerSigned = isSignedBy ownerPkh signatories
+        ownerSigned = isInList ownerPkh signatories
     {-# INLINEABLE validateWithdraw #-}
 
     --------------------------------------------------------------------------------
     -- HELPERS
     --------------------------------------------------------------------------------
-
-    -- Verify at least minAmount paid to address
-    payoutAtLeast :: PubKeyHash -> Integer -> [TxOut] -> Bool
-    payoutAtLeast _ _ [] = False
-    payoutAtLeast pkh minAmt (o:os) =
-      let addr = txOutAddress o
-          matchesPkh = case addressCredential addr of
-            PubKeyCredential pk -> pk P.== pkh
-            _                   -> False
-          Lovelace lovelaceAmt = lovelaceValueOf (txOutValue o)
-      in if matchesPkh P.&& lovelaceAmt P.>= minAmt
-           then True
-           else payoutAtLeast pkh minAmt os
-    {-# INLINEABLE payoutAtLeast #-}
-
-    isSignedBy :: PubKeyHash -> [PubKeyHash] -> Bool
-    isSignedBy _ []     = False
-    isSignedBy p (s:ss) = p P.== s P.|| isSignedBy p ss
-    {-# INLINEABLE isSignedBy #-}
 
     -- Find buyer: first signer who is NOT the seller
     findBuyer :: [PubKeyHash] -> PubKeyHash -> P.Maybe PubKeyHash
@@ -241,7 +261,8 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
         else findBuyer ss seller
     {-# INLINEABLE findBuyer #-}
 
-    -- Verify token payment to a PubKeyHash address
+    -- Verify token payment to a PubKeyHash address (at least expectedAmt)
+    -- Note: uses >= semantics, distinct from payoutTokenExact which uses ==
     hasTokenPayment :: PubKeyHash -> CurrencySymbol -> TokenName -> Integer -> [TxOut] -> Bool
     hasTokenPayment _ _ _ _ [] = False
     hasTokenPayment pkh policy tkn expectedAmt (o:os) =

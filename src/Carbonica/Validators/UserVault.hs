@@ -15,6 +15,58 @@ VALIDATION LOGIC:
 
   Action 1 (Withdraw COT): Not yet implemented
 -}
+
+{- ══════════════════════════════════════════════════════════════════════════
+   ERROR CODE REGISTRY - UserVault Validator
+   ══════════════════════════════════════════════════════════════════════════
+
+   UVE000 - Invalid script context
+            Cause: Not a spending context with inline datum
+            Fix: Ensure UTxO has inline datum and is being spent
+
+   UVE001 - Datum parse failed
+            Cause: Datum bytes don't deserialize to EmissionDatum
+            Fix: Verify datum structure matches EmissionDatum schema
+
+   UVE002 - Redeemer parse failed
+            Cause: Redeemer bytes don't deserialize to UserVaultRedeemer
+            Fix: Verify redeemer is VaultOffset or VaultWithdraw
+
+   UVE003 - CET withdrawal not allowed
+            Cause: VaultWithdraw action is not implemented
+            Fix: Use VaultOffset to burn CET with COT
+
+   UVE004 - Owner must sign
+            Cause: EmissionDatum owner PKH not in transaction signatories
+            Fix: Owner must sign the offset transaction
+
+   UVE005 - CET qty not negative
+            Cause: CET minted quantity is not negative (not burning)
+            Fix: CET quantity must be < 0 for burn action
+
+   UVE006 - CET qty /= COT qty
+            Cause: CET and COT quantities differ (1:1 ratio violated)
+            Fix: Burn equal amounts of CET and COT
+
+   UVE007 - Remaining tokens not returned
+            Cause: Remaining CET/COT not sent back to user script address
+            Fix: Return remaining tokens to the user vault address
+
+   UVE008 - Expected exactly one CET token
+            Cause: Zero or multiple CET token types in mint
+            Fix: Ensure exactly one CET token type is being burned
+
+   UVE009 - Expected exactly one COT token
+            Cause: Zero or multiple COT token types in mint
+            Fix: Ensure exactly one COT token type is being burned
+
+   UVE010 - Self input not found
+            Cause: Cannot locate own script input by TxOutRef
+            Fix: Ensure the spending UTXO reference is correct
+
+   ══════════════════════════════════════════════════════════════════════════
+-}
+
 module Carbonica.Validators.UserVault where
 
 import           PlutusLedgerApi.V3             (Address (..),
@@ -30,13 +82,15 @@ import           PlutusLedgerApi.V3             (Address (..),
                                                  TxOutRef,
                                                  getRedeemer)
 import           PlutusLedgerApi.V3.MintValue   (mintValueMinted)
-import           PlutusLedgerApi.V1.Value       (Value, valueOf, flattenValue)
+import           PlutusLedgerApi.V1.Value       (Value, valueOf)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
 import           Carbonica.Types.Emission       (EmissionDatum (..),
                                                  UserVaultRedeemer (..))
-import           Carbonica.Validators.Common    (isInList)
+import           Carbonica.Validators.Common    (findInputByOutRef,
+                                                 getTokensForPolicy,
+                                                 isInList)
 
 --------------------------------------------------------------------------------
 -- VALIDATOR LOGIC
@@ -59,16 +113,16 @@ typedValidator :: CurrencySymbol -> CurrencySymbol -> ScriptContext -> Bool
 typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
   SpendingScript oref (Just (Datum datumData)) ->
     case PlutusTx.fromBuiltinData datumData of
-      P.Nothing -> P.traceError "UserVault: Failed to parse datum"
+      P.Nothing -> P.traceError "UVE001"
       P.Just emissionDatum -> validateSpend oref emissionDatum
-  _ -> P.traceError "UserVault: Expected spending context with datum"
+  _ -> P.traceError "UVE000"
   where
     ScriptContext txInfo rawRedeemer scriptInfo = ctx
 
     -- Parse redeemer
     redeemer :: UserVaultRedeemer
     redeemer = case PlutusTx.fromBuiltinData (getRedeemer rawRedeemer) of
-      P.Nothing -> P.traceError "UserVault: Failed to parse redeemer"
+      P.Nothing -> P.traceError "UVE002"
       P.Just r  -> r
 
     mintedValue :: Value
@@ -91,7 +145,7 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
     validateSpend :: TxOutRef -> EmissionDatum -> Bool
     validateSpend oref emissionDatum = case redeemer of
       VaultOffset _amount -> validateOffset oref emissionDatum
-      VaultWithdraw       -> P.traceError "UserVault: CET withdrawal not allowed"
+      VaultWithdraw       -> P.traceError "UVE003"
     {-# INLINEABLE validateSpend #-}
 
     --------------------------------------------------------------------------------
@@ -106,10 +160,10 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
     --------------------------------------------------------------------------------
     validateOffset :: TxOutRef -> EmissionDatum -> Bool
     validateOffset oref emissionDatum =
-      P.traceIfFalse "UserVault: Owner must sign" ownerSigned
-      P.&& P.traceIfFalse "UserVault: CET qty not negative" cetNegative
-      P.&& P.traceIfFalse "UserVault: CET qty /= COT qty" cetEqualsCot
-      P.&& P.traceIfFalse "UserVault: Remaining tokens not returned" remainingTokensReturned
+      P.traceIfFalse "UVE004" ownerSigned
+      P.&& P.traceIfFalse "UVE005" cetNegative
+      P.&& P.traceIfFalse "UVE006" cetEqualsCot
+      P.&& P.traceIfFalse "UVE007" remainingTokensReturned
       where
         -- Owner signature check
         ownerSigned :: Bool
@@ -126,13 +180,13 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
         cetTokenData :: (TokenName, Integer)
         cetTokenData = case cetMintTokens of
           [(tkn, qty)] -> (tkn, qty)
-          _            -> P.traceError "UserVault: Expected exactly one CET token"
+          _            -> P.traceError "UVE008"
 
         -- Extract exactly one COT token and quantity
         cotTokenData :: (TokenName, Integer)
         cotTokenData = case cotMintTokens of
           [(tkn, qty)] -> (tkn, qty)
-          _            -> P.traceError "UserVault: Expected exactly one COT token"
+          _            -> P.traceError "UVE009"
 
         (cetTkn, cetQtyVal) = cetTokenData
         (cotTkn, cotQtyVal) = cotTokenData
@@ -159,27 +213,13 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
                else verifyRemainingTokensToAddr outputs userScriptAddr cetPolicy cotPolicy cetTkn cotTkn remainingCet remainingCot
     {-# INLINEABLE validateOffset #-}
 
-    -- Get tokens for a policy from minted value
-    getTokensForPolicy :: Value -> CurrencySymbol -> [(TokenName, Integer)]
-    getTokensForPolicy val policy =
-      [(tkn, qty) | (cs, tkn, qty) <- flattenValue val, cs P.== policy]
-    {-# INLINEABLE getTokensForPolicy #-}
-
     -- Get user script address from inputs (input's script address with stake credential)
     getUserScriptAddress :: TxOutRef -> [TxInInfo] -> Address
     getUserScriptAddress oref inps =
-      case findSelfInput oref inps of
-        P.Nothing -> P.traceError "UserVault: Self input not found"
+      case findInputByOutRef inps oref of
+        P.Nothing -> P.traceError "UVE010"
         P.Just selfIn -> txOutAddress (txInInfoResolved selfIn)
     {-# INLINEABLE getUserScriptAddress #-}
-
-    findSelfInput :: TxOutRef -> [TxInInfo] -> P.Maybe TxInInfo
-    findSelfInput _ [] = P.Nothing
-    findSelfInput ref (i:is) =
-      if txInInfoOutRef i P.== ref
-        then P.Just i
-        else findSelfInput ref is
-    {-# INLINEABLE findSelfInput #-}
 
     -- Sum total CET and COT tokens in inputs
     getTotalTokensInInputs :: [TxInInfo] -> CurrencySymbol -> CurrencySymbol -> TokenName -> TokenName -> (Integer, Integer)
@@ -199,7 +239,7 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
       if txOutAddress o P.== addr
         then let cetInOut = valueOf (txOutValue o) cetP cetT
                  cotInOut = valueOf (txOutValue o) cotP cotT
-             in cetInOut P.== expCet P.&& cotInOut P.== expCot 
+             in cetInOut P.== expCet P.&& cotInOut P.== expCot
         else verifyRemainingTokensToAddr os addr cetP cotP cetT cotT expCet expCot
     {-# INLINEABLE verifyRemainingTokensToAddr #-}
 

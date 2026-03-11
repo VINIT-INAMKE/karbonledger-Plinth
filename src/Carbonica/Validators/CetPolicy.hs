@@ -18,6 +18,46 @@ VALIDATION LOGIC:
     - CET qty < 0 (burning)
     - CET quantity == COT quantity (1:1 offset ratio)
 -}
+
+{- ══════════════════════════════════════════════════════════════════════════
+   ERROR CODE REGISTRY - CetPolicy Validator
+   ══════════════════════════════════════════════════════════════════════════
+
+   CEE000 - Invalid script context
+            Cause: Not a minting context
+            Fix: Ensure script is used as minting policy
+
+   CEE001 - Redeemer parse failed
+            Cause: Redeemer bytes do not deserialize to CetMintRedeemer
+            Fix: Verify redeemer structure matches CetMintRedeemer schema
+
+   CEE002 - Must mint single token type
+            Cause: Zero or multiple token names minted under policy
+            Fix: Mint exactly one token type per transaction
+
+   CEE003 - Minted quantity does not match redeemer quantity
+            Cause: flattenValue qty differs from cet_qty in redeemer
+            Fix: Ensure redeemer qty equals actual minted amount
+
+   CEE004 - CET must go to UserVault with matching quantity
+            Cause: No output to UserVault script hash with correct qty
+            Fix: Route CET output to correct UserVault script address
+
+   CEE005 - Output datum does not match redeemer datum
+            Cause: Output datum BuiltinData differs from toBuiltinData cetDatum
+            Fix: Ensure output datum is exactly the CetDatum from redeemer
+
+   CEE006 - Must burn (negative quantity)
+            Cause: CET burn quantity is not negative
+            Fix: CET qty must be < 0 for burn action
+
+   CEE007 - CET quantity does not equal COT quantity
+            Cause: cetQtyBurned /= cotQtyBurned (1:1 offset ratio violated)
+            Fix: Burn equal amounts of CET and COT
+
+   ══════════════════════════════════════════════════════════════════════════
+-}
+
 module Carbonica.Validators.CetPolicy where
 
 import           PlutusLedgerApi.V3             (Address (..),
@@ -37,8 +77,9 @@ import           PlutusLedgerApi.V1.Value       (Value, valueOf, flattenValue)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
-import           Carbonica.Types.Emission       (CetDatum (..), 
+import           Carbonica.Types.Emission       (CetDatum (..),
                                                  CetMintRedeemer (..))
+import           Carbonica.Validators.Common    (getTotalForPolicy)
 
 --------------------------------------------------------------------------------
 -- VALIDATOR LOGIC
@@ -65,14 +106,14 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
   MintingScript ownPolicy -> case redeemer of
     CetMintWithDatum cetDatum   -> mintCheck userVaultHash ownPolicy cetDatum
     CetBurnWithCot _burnRedeemer -> burnCheck ownPolicy cotPolicy
-  _ -> P.traceError "CET: Expected minting context"
+  _ -> P.traceError "CEE000"
   where
     ScriptContext txInfo rawRedeemer scriptInfo = ctx
 
     -- Parse redeemer
     redeemer :: CetMintRedeemer
     redeemer = case PlutusTx.fromBuiltinData (getRedeemer rawRedeemer) of
-      P.Nothing -> P.traceError "CET: Failed to parse redeemer"
+      P.Nothing -> P.traceError "CEE001"
       P.Just r  -> r
 
     mintedValue :: Value
@@ -93,10 +134,10 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
     --------------------------------------------------------------------------------
     mintCheck :: ScriptHash -> CurrencySymbol -> CetDatum -> Bool
     mintCheck vaultHash ownPolicy cetDatum =
-      P.traceIfFalse "CET: Must mint single token type" singleTokenMinted
-      P.&& P.traceIfFalse "CET: Minted qty /= redeemer qty" qtyMatches
-      P.&& P.traceIfFalse "CET: Must go to UserVault with matching qty" sentToUserVault
-      P.&& P.traceIfFalse "CET: Output datum /= redeemer" datumMatches
+      P.traceIfFalse "CEE002" singleTokenMinted
+      P.&& P.traceIfFalse "CEE003" qtyMatches
+      P.&& P.traceIfFalse "CEE004" sentToUserVault
+      P.&& P.traceIfFalse "CEE005" datumMatches
       where
         expectedQty :: Integer
         expectedQty = cetQty cetDatum
@@ -115,7 +156,7 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
         mintedTokenData :: (TokenName, Integer)
         mintedTokenData = case ownTokens of
           [(_, tkn, qty)] -> (tkn, qty)
-          _               -> P.traceError "CET: Expected exactly one token"
+          _               -> P.traceError "CEE002"
 
         mintedTkn :: TokenName
         mintedQtyVal :: Integer
@@ -139,7 +180,7 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
         datumMatches = case cetOutput of
           P.Nothing -> False
           P.Just o  -> case txOutDatum o of
-            OutputDatum (Datum d) -> 
+            OutputDatum (Datum d) ->
               let redeemerData :: BuiltinData = PlutusTx.toBuiltinData cetDatum
               in d P.== redeemerData
             _ -> False
@@ -151,7 +192,7 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
     findCetOutputToUserVault (o:os) vaultHash policy tkn =
       let hasCet = valueOf (txOutValue o) policy tkn P.> 0
           isUserVault = case addressCredential (txOutAddress o) of
-            ScriptCredential sh -> sh P.== vaultHash  -- FIXED: verify specific script hash
+            ScriptCredential sh -> sh P.== vaultHash  -- verify specific script hash
             _                   -> False
       in if hasCet P.&& isUserVault
            then P.Just o
@@ -167,17 +208,17 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
     -- | Burn check using cotPolicy from validator parameter (not redeemer)
     burnCheck :: CurrencySymbol -> CurrencySymbol -> Bool
     burnCheck ownPolicy cotPolicyParam =
-      P.traceIfFalse "CET: Must burn (negative qty)" cetNegative
-      P.&& P.traceIfFalse "CET: CET qty /= COT qty" cetEqualsCot
+      P.traceIfFalse "CEE006" cetNegative
+      P.&& P.traceIfFalse "CEE007" cetEqualsCot
       where
         -- Total CET quantity being burned (negative value)
         cetQtyBurned :: Integer
-        cetQtyBurned = getTotalMintedForPolicy mintedValue ownPolicy
+        cetQtyBurned = getTotalForPolicy mintedValue ownPolicy
 
         -- Total COT quantity being burned (negative value)
         -- Uses cotPolicyParam from validator parameter, NOT from redeemer
         cotQtyBurned :: Integer
-        cotQtyBurned = getTotalMintedForPolicy mintedValue cotPolicyParam
+        cotQtyBurned = getTotalForPolicy mintedValue cotPolicyParam
 
         -- cet_qty < 0 (burning)
         cetNegative :: Bool
@@ -188,17 +229,6 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
         cetEqualsCot = cetQtyBurned P.== cotQtyBurned
     {-# INLINEABLE burnCheck #-}
 
-    -- Sum all token quantities for a given policy
-    getTotalMintedForPolicy :: Value -> CurrencySymbol -> Integer
-    getTotalMintedForPolicy val policy =
-      sumQty [qty | (cs, _, qty) <- flattenValue val, cs P.== policy]
-    {-# INLINEABLE getTotalMintedForPolicy #-}
-
-    sumQty :: [Integer] -> Integer
-    sumQty []     = 0
-    sumQty (x:xs) = x P.+ sumQty xs
-    {-# INLINEABLE sumQty #-}
-
 --------------------------------------------------------------------------------
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
@@ -206,7 +236,7 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
 {-# INLINEABLE untypedValidator #-}
 untypedValidator :: BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator userVaultHashData cotPolicyData ctxData =
-  P.check (typedValidator 
+  P.check (typedValidator
     (PlutusTx.unsafeFromBuiltinData userVaultHashData)
     (PlutusTx.unsafeFromBuiltinData cotPolicyData)
     (PlutusTx.unsafeFromBuiltinData ctxData))

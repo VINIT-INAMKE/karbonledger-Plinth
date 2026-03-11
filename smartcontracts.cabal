@@ -64,9 +64,7 @@ library
   hs-source-dirs:  src
   build-depends:   base
   exposed-modules:
-    -- Shared Utilities
-    Carbonica.Utils
-    -- Carbonica Validators Common (Phase 4 - Shared validation helpers)
+    -- Carbonica Validators Common (Single source of truth for shared helpers)
     Carbonica.Validators.Common
     -- Carbonica Types
     Carbonica.Types.Core
