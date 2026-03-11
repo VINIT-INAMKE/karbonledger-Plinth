@@ -293,6 +293,7 @@ typedValidator idNftPolicy projectPolicy ctx =
             [o] -> extractDatum o
             _   -> P.Nothing
 
+          {-# NOINLINE outputDatumValid #-}
           outputDatumValid :: Bool
           outputDatumValid = case continuingOutputDatum of
             P.Nothing -> False

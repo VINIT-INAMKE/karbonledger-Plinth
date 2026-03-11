@@ -609,7 +609,7 @@ spendValidator idNftPolicy ctx =
         P.&& P.traceIfFalse "DGE015" (preservesScriptHashExcept field inputCfg outputCfg)
 
     -- All non-script-hash, non-multisig fields preserved
-    {-# INLINEABLE preservesNonMultisigFields #-}
+    {-# NOINLINE preservesNonMultisigFields #-}
     preservesNonMultisigFields :: ConfigDatum -> ConfigDatum -> Bool
     preservesNonMultisigFields i o =
       cdFeesAddress o P.== cdFeesAddress i
@@ -624,7 +624,7 @@ spendValidator idNftPolicy ctx =
       P.&& cdUserVaultHash o P.== cdUserVaultHash i
 
     -- All fields except the named one preserved
-    {-# INLINEABLE preservesAllExcept #-}
+    {-# NOINLINE preservesAllExcept #-}
     preservesAllExcept :: P.BuiltinByteString -> ConfigDatum -> ConfigDatum -> Bool
     preservesAllExcept field i o =
       (field P.== "feeAddress" P.|| cdFeesAddress o P.== cdFeesAddress i)
@@ -640,7 +640,7 @@ spendValidator idNftPolicy ctx =
       P.&& cdUserVaultHash o P.== cdUserVaultHash i
 
     -- Script hash fields: preserve all except the one being updated
-    {-# INLINEABLE preservesScriptHashExcept #-}
+    {-# NOINLINE preservesScriptHashExcept #-}
     preservesScriptHashExcept :: P.BuiltinByteString -> ConfigDatum -> ConfigDatum -> Bool
     preservesScriptHashExcept field i o =
       cdFeesAddress o P.== cdFeesAddress i
