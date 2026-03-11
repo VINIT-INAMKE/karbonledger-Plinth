@@ -110,6 +110,7 @@ test-suite carbonica-tests
   other-modules:
     Test.Carbonica.Types
     Test.Carbonica.Validators
+    Test.Carbonica.Common
     Test.Carbonica.Properties.SmartConstructors
   build-depends:
     , base
