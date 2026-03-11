@@ -12,7 +12,7 @@ This roadmap transforms the Carbonica smart contract platform from a state with 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Code Quality Foundation** - Consolidate shared helpers, standardize error handling, set up test framework (completed 2026-03-11)
+- [x] **Phase 1: Code Quality Foundation** - Consolidate shared helpers, standardize error handling, set up test framework (completed 2026-03-11)
 - [ ] **Phase 2: Critical Vulnerability Fixes** - Patch the 4 critical vulns: datum verification, auth bypass, config integrity, mint validation
 - [ ] **Phase 3: High Vulnerability Fixes** - Fix NFT destination, trivial signer checks, governance auth gaps; add critical attack tests
 - [ ] **Phase 4: Medium and Low Fixes** - Harden marketplace validation, governance vote integrity, document disabled features
@@ -32,9 +32,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 01-01-PLAN.md -- Consolidate helpers: migrate Utils.hs into Common.hs, remove all local duplicates, delete Utils.hs
-- [ ] 01-02-PLAN.md -- Error code standardization: add error registries and codes to CetPolicy, UserVault, Marketplace, IdentificationNft
-- [ ] 01-03-PLAN.md -- Test framework: create Common.hs tests, replace all stub tests with real helper isolation tests
+- [x] 01-01-PLAN.md -- Consolidate helpers: migrate Utils.hs into Common.hs, remove all local duplicates, delete Utils.hs
+- [x] 01-02-PLAN.md -- Error code standardization: add error registries and codes to CetPolicy, UserVault, Marketplace, IdentificationNft
+- [x] 01-03-PLAN.md -- Test framework: create Common.hs tests, replace all stub tests with real helper isolation tests
 
 ### Phase 2: Critical Vulnerability Fixes
 **Goal**: The 4 critical attack vectors are closed -- no single multisig member can manipulate vote outcomes, bypass governance auth, silently change config fields, or mint unauthorized tokens
@@ -45,11 +45,11 @@ Plans:
   2. DaoGovernance mint verifies the submitter's PubKeyHash is present in the ConfigDatum multisig signers list using txSignedBy -- not just checking that any signer exists
   3. DaoGovernance verifyConfigUpdate checks that ALL non-target ConfigDatum fields remain identical between input and output for every ProposalAction case
   4. CotPolicy mint extracts the referenced ProjectDatum, verifies pdStatus is ProjectApproved, and verifies minted COT amount equals pdCotAmount from the datum (not from the redeemer)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Patch ProjectVault vote output datum verification (CRIT-01) and CotPolicy project status/amount validation (CRIT-04)
+- [ ] 02-02-PLAN.md -- Patch DaoGovernance mint auth (CRIT-02) and verifyConfigUpdate field integrity (CRIT-03), delete hasSigner/hasAnySigner, add Multisig equality tests
 
 ### Phase 3: High Vulnerability Fixes
 **Goal**: All high-severity authorization and destination checks are real -- NFTs go to the correct vault, signer checks use txSignedBy, and governance actions require actual multisig authorization; critical fixes are verified by attack tests
@@ -105,7 +105,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Code Quality Foundation | 3/3 | Complete    | 2026-03-11 |
-| 2. Critical Vulnerability Fixes | 0/0 | Not started | - |
+| 2. Critical Vulnerability Fixes | 0/2 | Planned | - |
 | 3. High Vulnerability Fixes | 0/0 | Not started | - |
 | 4. Medium and Low Fixes | 0/0 | Not started | - |
 | 5. Comprehensive Testing and Documentation | 0/0 | Not started | - |
