@@ -233,6 +233,11 @@ typedValidator idNftPolicy projectPolicy ctx =
         P.Nothing -> P.traceError "PVE002"
         P.Just r  -> r
 
+      {-# INLINEABLE listLength #-}
+      listLength :: [a] -> Integer
+      listLength []     = 0
+      listLength (_:xs) = 1 P.+ listLength xs
+
       -- ═══════════════════════════════════════════════════════════════
       -- PHASE 3: Main validation dispatch
       -- ═══════════════════════════════════════════════════════════════
@@ -298,7 +303,7 @@ typedValidator idNftPolicy projectPolicy ctx =
                  P.== pdYesVotes projectDatum P.+ pdNoVotes projectDatum P.+ 1)
               -- Voter added to voters list (length +1)
               P.&& P.traceIfFalse "PVE014"
-                (P.length (pdVoters outDatum) P.== P.length (pdVoters projectDatum) P.+ 1)
+                (listLength (pdVoters outDatum) P.== listLength (pdVoters projectDatum) P.+ 1)
               -- Immutable fields unchanged
               P.&& P.traceIfFalse "PVE015" (pdProjectName outDatum P.== pdProjectName projectDatum)
               P.&& P.traceIfFalse "PVE016" (pdDeveloper outDatum P.== pdDeveloper projectDatum)

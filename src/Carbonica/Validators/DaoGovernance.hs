@@ -423,7 +423,9 @@ spendValidator idNftPolicy ctx =
           beforeDeadline = before deadline validRange
 
           -- At least one signer present
-          voterSigned = P.not (P.null signatories)
+          voterSigned = case signatories of
+            [] -> False
+            _  -> True
 
           -- Get voter (first signer)
           voter :: PubKeyHash
