@@ -28,7 +28,7 @@
 
 ### Low Fixes
 
-- [ ] **LOW-01**: Standardize error handling to error codes across all validators (CetPolicy, UserVault, Marketplace)
+- [x] **LOW-01**: Standardize error handling to error codes across all validators (CetPolicy, UserVault, Marketplace)
 - [ ] **LOW-02**: Document VaultWithdraw as intentionally disabled with proper error code
 
 ### Code Quality
@@ -40,7 +40,7 @@
 
 ### Testing
 
-- [ ] **TEST-01**: Set up Tasty test suite with tasty-hunit and tasty-quickcheck
+- [x] **TEST-01**: Set up Tasty test suite with tasty-hunit and tasty-quickcheck
 - [ ] **TEST-02**: Add attack scenario tests for each critical vulnerability fix
 - [ ] **TEST-03**: Add attack scenario tests for each high vulnerability fix
 - [ ] **TEST-04**: Add property-based tests for all smart constructors
@@ -77,13 +77,13 @@
 | MED-02 | Phase 4 | Pending |
 | MED-03 | Phase 4 | Pending |
 | MED-04 | Phase 4 | Pending |
-| LOW-01 | Phase 1 | Pending |
+| LOW-01 | Phase 1 | Complete |
 | LOW-02 | Phase 4 | Pending |
 | QUAL-01 | Phase 1 | Complete |
 | QUAL-02 | Phase 1 | Complete |
 | QUAL-03 | Phase 5 | Pending |
 | QUAL-04 | Phase 1 | Complete |
-| TEST-01 | Phase 1 | Pending |
+| TEST-01 | Phase 1 | Complete |
 | TEST-02 | Phase 3 | Pending |
 | TEST-03 | Phase 5 | Pending |
 | TEST-04 | Phase 5 | Pending |
