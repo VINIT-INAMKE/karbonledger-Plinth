@@ -1,0 +1,99 @@
+# Requirements: Carbonica Security Hardening
+
+**Defined:** 2026-03-11
+**Core Value:** Every validator enforces complete authorization and datum integrity
+
+## v1 Requirements
+
+### Critical Fixes
+
+- [ ] **CRIT-01**: ProjectVault vote must verify continuing output datum (vote count +1, voter added, all other fields unchanged)
+- [ ] **CRIT-02**: DaoGovernance mint must verify submitter is in multisig group (replace trivial hasSigner)
+- [ ] **CRIT-03**: DaoGovernance verifyConfigUpdate must verify all non-target ConfigDatum fields remain unchanged
+- [ ] **CRIT-04**: CotPolicy mint must verify project status is Approved and minted COT matches pdCotAmount
+
+### High Fixes
+
+- [ ] **HIGH-01**: ProjectPolicy mint must verify NFT sent to specific ProjectVault script hash (from ConfigDatum)
+- [ ] **HIGH-02**: Replace all trivial signer checks (hasSigners/hasAnySigner) with real txSignedBy verification
+- [ ] **HIGH-03**: DaoGovernance execute/reject must require at least one multisig signer
+- [ ] **HIGH-04**: DaoGovernance vote must verify voter PKH specifically signed (not just any signer)
+
+### Medium Fixes
+
+- [ ] **MED-01**: Marketplace must verify UTxO actually contains the listed COT tokens
+- [ ] **MED-02**: Marketplace must enforce minimum price > 0
+- [ ] **MED-03**: Marketplace royalty calculation must handle rounding (minimum 1 lovelace royalty)
+- [ ] **MED-04**: DaoGovernance vote must verify all non-vote fields unchanged in output datum
+
+### Low Fixes
+
+- [ ] **LOW-01**: Standardize error handling to error codes across all validators (CetPolicy, UserVault, Marketplace)
+- [ ] **LOW-02**: Document VaultWithdraw as intentionally disabled with proper error code
+
+### Code Quality
+
+- [x] **QUAL-01**: Apply best Haskell practices: remove duplicate helper functions, consolidate into Common.hs
+- [x] **QUAL-02**: Remove Utils.hs duplication — single source of truth in Validators.Common
+- [ ] **QUAL-03**: Add proper Haddock documentation to all exported functions
+- [x] **QUAL-04**: Ensure consistent use of INLINEABLE pragmas and PlutusTx patterns
+
+### Testing
+
+- [ ] **TEST-01**: Set up Tasty test suite with tasty-hunit and tasty-quickcheck
+- [ ] **TEST-02**: Add attack scenario tests for each critical vulnerability fix
+- [ ] **TEST-03**: Add attack scenario tests for each high vulnerability fix
+- [ ] **TEST-04**: Add property-based tests for all smart constructors
+- [ ] **TEST-05**: Add datum integrity property tests for vote/config update validators
+
+## v2 Requirements
+
+- **V2-01**: Set-based multisig lookup for >20 signers
+- **V2-02**: Implement UserVault VaultWithdraw with proper authorization
+- **V2-03**: On-chain emulator integration tests with cardano-node-emulator
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| New protocol features | Security hardening only |
+| Off-chain / frontend code | Validators scope only |
+| Datum schema migration | Maintain backward compatibility |
+| Performance optimization | Only where needed for fixes |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CRIT-01 | Phase 2 | Pending |
+| CRIT-02 | Phase 2 | Pending |
+| CRIT-03 | Phase 2 | Pending |
+| CRIT-04 | Phase 2 | Pending |
+| HIGH-01 | Phase 3 | Pending |
+| HIGH-02 | Phase 3 | Pending |
+| HIGH-03 | Phase 3 | Pending |
+| HIGH-04 | Phase 3 | Pending |
+| MED-01 | Phase 4 | Pending |
+| MED-02 | Phase 4 | Pending |
+| MED-03 | Phase 4 | Pending |
+| MED-04 | Phase 4 | Pending |
+| LOW-01 | Phase 1 | Pending |
+| LOW-02 | Phase 4 | Pending |
+| QUAL-01 | Phase 1 | Complete |
+| QUAL-02 | Phase 1 | Complete |
+| QUAL-03 | Phase 5 | Pending |
+| QUAL-04 | Phase 1 | Complete |
+| TEST-01 | Phase 1 | Pending |
+| TEST-02 | Phase 3 | Pending |
+| TEST-03 | Phase 5 | Pending |
+| TEST-04 | Phase 5 | Pending |
+| TEST-05 | Phase 5 | Pending |
+
+**Coverage:**
+- v1 requirements: 23 total
+- Mapped to phases: 23
+- Unmapped: 0
+
+---
+*Requirements defined: 2026-03-11*
+*Traceability updated: 2026-03-11*
