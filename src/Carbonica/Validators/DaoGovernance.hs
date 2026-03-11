@@ -60,7 +60,15 @@ Reject Action:
             Cause: Output datum not found OR proposal_id mismatch OR state != InProgress
             Fix: Verify output has correct GovernanceDatum with matching ID and InProgress state
 
-   SPENDING VALIDATOR ERRORS (DGE005-DGE012):
+   DGE013 - ConfigDatum not found during mint
+            Cause: No reference input contains ID NFT with ConfigDatum
+            Fix: Include config holder as reference input when submitting proposals
+
+   DGE014 - Submitter not authorized for mint
+            Cause: Transaction signatories do not satisfy multisig requirement from ConfigDatum
+            Fix: Required number of authorized multisig members must sign
+
+   SPENDING VALIDATOR ERRORS (DGE005-DGE012, DGE015-DGE016):
 
    DGE005 - Invalid spending context
             Cause: Not a spending script OR missing inline datum
@@ -93,6 +101,15 @@ Reject Action:
    DGE012 - Output ConfigDatum not found
             Cause: No output with ID NFT during Execute action
             Fix: Ensure updated ConfigDatum is sent to config holder
+
+   DGE015 - Non-target ConfigDatum field mutated
+            Cause: A field not targeted by the ProposalAction was changed between input and output ConfigDatum
+            Fix: Only the field specified by the ProposalAction may change
+
+   DGE016 - Governance deadlock risk
+            Cause: ActionRemoveSigner would leave msRequired > remaining signers count,
+                   or ActionUpdateRequired sets value outside [1, signers count]
+            Fix: Ensure required threshold is achievable after the change
 
    ══════════════════════════════════════════════════════════════════════════
 -}
@@ -131,8 +148,10 @@ import           Carbonica.Types.Config         (ConfigDatum,
                                                  cdUserVaultHash,
                                                  cdVotingHash,
                                                  identificationTokenName)
-import           Carbonica.Validators.Common    (findDatumInOutputs,
-                                                 isInList)
+import           Carbonica.Validators.Common    (findConfigDatum,
+                                                 findDatumInOutputs,
+                                                 isInList,
+                                                 validateMultisig)
 import           Carbonica.Types.Governance     (GovernanceDatum,
                                                  ProposalState (..),
                                                  Vote (..),
@@ -166,7 +185,7 @@ import           Carbonica.Types.Governance     (GovernanceDatum,
 --     - SubmitProposal: submitter signs, output to script, InProgress state
 --     - Other redeemers: fail
 mintValidator :: CurrencySymbol -> ScriptContext -> Bool
-mintValidator _idNftPolicy ctx =
+mintValidator idNftPolicy ctx =
   let ScriptContext txInfo rawRedeemer scriptInfo = ctx
 
       -- ═══════════════════════════════════════════════════════════════
@@ -178,6 +197,19 @@ mintValidator _idNftPolicy ctx =
 
       {-# INLINE signatories #-}
       signatories = txInfoSignatories txInfo
+
+      {-# INLINE refs #-}
+      refs = txInfoReferenceInputs txInfo
+
+      {-# INLINE idTokenName #-}
+      idTokenName :: TokenName
+      idTokenName = TokenName identificationTokenName
+
+      {-# INLINE mintConfigDatum #-}
+      mintConfigDatum :: ConfigDatum
+      mintConfigDatum = case findConfigDatum refs idNftPolicy idTokenName of
+        P.Nothing  -> P.traceError "DGE013"
+        P.Just cfg -> cfg
 
       -- ═══════════════════════════════════════════════════════════════
       -- PHASE 2: Parse redeemer ONCE
@@ -196,7 +228,7 @@ mintValidator _idNftPolicy ctx =
       {-# INLINEABLE submitCheck #-}
       submitCheck :: CurrencySymbol -> P.BuiltinByteString -> Bool
       submitCheck ownPolicy proposalId =
-        P.traceIfFalse "DGE002" hasAuthorizedSigner
+        P.traceIfFalse "DGE014" hasAuthorizedSigner
         P.&& P.traceIfFalse "DGE003" outputHasNft
         P.&& P.traceIfFalse "DGE004" outputStateValid
         where
@@ -222,16 +254,13 @@ mintValidator _idNftPolicy ctx =
 
       {-# INLINEABLE burnCheck #-}
       burnCheck :: Bool
-      burnCheck = P.traceIfFalse "DGE002" hasAuthorizedSigner
+      burnCheck = P.traceIfFalse "DGE014" hasAuthorizedSigner
 
       {-# INLINE hasAuthorizedSigner #-}
       hasAuthorizedSigner :: Bool
-      hasAuthorizedSigner = hasSigner signatories
-
-      {-# INLINEABLE hasSigner #-}
-      hasSigner :: [PubKeyHash] -> Bool
-      hasSigner [] = False
-      hasSigner _  = True
+      hasAuthorizedSigner =
+        let ms = cdMultisig mintConfigDatum
+        in validateMultisig signatories (msSigners ms) (msRequired ms)
 
       {-# INLINEABLE findOutputWithNft #-}
       findOutputWithNft :: [TxOut] -> CurrencySymbol -> TokenName -> P.Maybe TxOut
@@ -335,19 +364,7 @@ spendValidator idNftPolicy ctx =
 
       {-# INLINE configDatum #-}
       configDatum :: P.Maybe ConfigDatum
-      configDatum = findConfigFromRefs refs
-
-      {-# INLINEABLE findConfigFromRefs #-}
-      findConfigFromRefs :: [TxInInfo] -> P.Maybe ConfigDatum
-      findConfigFromRefs [] = P.Nothing
-      findConfigFromRefs (i:is) =
-        let txOut = txInInfoResolved i
-            hasIdNft = valueOf (txOutValue txOut) idNftPolicy idTokenName P.> 0
-        in if hasIdNft
-             then case txOutDatum txOut of
-               OutputDatum (Datum d) -> PlutusTx.fromBuiltinData d
-               _ -> findConfigFromRefs is
-             else findConfigFromRefs is
+      configDatum = findConfigDatum refs idNftPolicy idTokenName
 
       -- Get continuing output datum (the output going back to same script)
       {-# INLINE outputDatum #-}
@@ -406,7 +423,7 @@ spendValidator idNftPolicy ctx =
           beforeDeadline = before deadline validRange
 
           -- At least one signer present
-          voterSigned = hasAnySigner signatories
+          voterSigned = P.not (P.null signatories)
 
           -- Get voter (first signer)
           voter :: PubKeyHash
@@ -523,11 +540,6 @@ spendValidator idNftPolicy ctx =
     -- HELPER FUNCTIONS (all INLINEABLE for optimization)
     -- ═══════════════════════════════════════════════════════════════
 
-    {-# INLINEABLE hasAnySigner #-}
-    hasAnySigner :: [PubKeyHash] -> Bool
-    hasAnySigner [] = False
-    hasAnySigner _  = True
-
     {-# INLINEABLE findVoterRecord #-}
     findVoterRecord :: PubKeyHash -> [VoteRecord] -> P.Maybe VoteRecord
     findVoterRecord _ [] = P.Nothing
@@ -538,48 +550,120 @@ spendValidator idNftPolicy ctx =
 
 
     -- Verify ConfigDatum update matches proposal action
-    -- Validator config update verification for proposal actions
+    -- CRIT-03: Each case verifies target field changed correctly AND all non-target fields preserved
+    {-# INLINEABLE verifyConfigUpdate #-}
     verifyConfigUpdate :: ProposalAction -> ConfigDatum -> ConfigDatum -> Bool
     verifyConfigUpdate action inputCfg outputCfg = case action of
       ActionAddSigner pkh ->
-        -- New signer should be in output, not in input
         isInList pkh (msSigners (cdMultisig outputCfg))
         P.&& P.not (isInList pkh (msSigners (cdMultisig inputCfg)))
-      
+        -- msRequired should be unchanged
+        P.&& msRequired (cdMultisig outputCfg) P.== msRequired (cdMultisig inputCfg)
+        P.&& P.traceIfFalse "DGE015" (preservesNonMultisigFields inputCfg outputCfg)
+
       ActionRemoveSigner pkh ->
-        -- Signer should be in input, not in output
         isInList pkh (msSigners (cdMultisig inputCfg))
         P.&& P.not (isInList pkh (msSigners (cdMultisig outputCfg)))
-      
+        -- Deadlock prevention: required <= remaining signers
+        P.&& P.traceIfFalse "DGE016"
+          (msRequired (cdMultisig outputCfg) P.<= lengthOf (msSigners (cdMultisig outputCfg)))
+        -- msRequired should be unchanged
+        P.&& msRequired (cdMultisig outputCfg) P.== msRequired (cdMultisig inputCfg)
+        P.&& P.traceIfFalse "DGE015" (preservesNonMultisigFields inputCfg outputCfg)
+
       ActionUpdateFeeAmount newAmt ->
         cdFeesAmount outputCfg P.== newAmt
-      
+        P.&& P.traceIfFalse "DGE015" (preservesAllExcept "feeAmount" inputCfg outputCfg)
+
       ActionUpdateFeeAddress newAddr ->
         cdFeesAddress outputCfg P.== newAddr
-      
+        P.&& P.traceIfFalse "DGE015" (preservesAllExcept "feeAddress" inputCfg outputCfg)
+
       ActionAddCategory cat ->
         isCategoryInList cat (cdCategories outputCfg)
         P.&& P.not (isCategoryInList cat (cdCategories inputCfg))
-      
+        P.&& P.traceIfFalse "DGE015" (preservesAllExcept "categories" inputCfg outputCfg)
+
       ActionRemoveCategory cat ->
         isCategoryInList cat (cdCategories inputCfg)
         P.&& P.not (isCategoryInList cat (cdCategories outputCfg))
-      
+        P.&& P.traceIfFalse "DGE015" (preservesAllExcept "categories" inputCfg outputCfg)
+
       ActionUpdateRequired newReq ->
         msRequired (cdMultisig outputCfg) P.== newReq
-      
+        -- Deadlock and no-auth prevention
+        P.&& P.traceIfFalse "DGE016"
+          (newReq P.>= 1 P.&& newReq P.<= lengthOf (msSigners (cdMultisig outputCfg)))
+        -- Signers list should be unchanged
+        P.&& msSigners (cdMultisig outputCfg) P.== msSigners (cdMultisig inputCfg)
+        P.&& P.traceIfFalse "DGE015" (preservesNonMultisigFields inputCfg outputCfg)
+
       ActionUpdateProposalDuration newDur ->
         cdProposalDuration outputCfg P.== newDur
-      
+        P.&& P.traceIfFalse "DGE015" (preservesAllExcept "proposalDuration" inputCfg outputCfg)
+
       ActionUpdateScriptHash field newHash ->
         verifyScriptHashUpdate field newHash outputCfg
-    {-# INLINEABLE verifyConfigUpdate #-}
+        P.&& P.traceIfFalse "DGE015" (preservesScriptHashExcept field inputCfg outputCfg)
 
+    -- All non-script-hash, non-multisig fields preserved
+    {-# INLINEABLE preservesNonMultisigFields #-}
+    preservesNonMultisigFields :: ConfigDatum -> ConfigDatum -> Bool
+    preservesNonMultisigFields i o =
+      cdFeesAddress o P.== cdFeesAddress i
+      P.&& cdFeesAmount o P.== cdFeesAmount i
+      P.&& cdCategories o P.== cdCategories i
+      P.&& cdProposalDuration o P.== cdProposalDuration i
+      P.&& cdProjectPolicyId o P.== cdProjectPolicyId i
+      P.&& cdProjectVaultHash o P.== cdProjectVaultHash i
+      P.&& cdVotingHash o P.== cdVotingHash i
+      P.&& cdCotPolicyId o P.== cdCotPolicyId i
+      P.&& cdCetPolicyId o P.== cdCetPolicyId i
+      P.&& cdUserVaultHash o P.== cdUserVaultHash i
+
+    -- All fields except the named one preserved
+    {-# INLINEABLE preservesAllExcept #-}
+    preservesAllExcept :: P.BuiltinByteString -> ConfigDatum -> ConfigDatum -> Bool
+    preservesAllExcept field i o =
+      (field P.== "feeAddress" P.|| cdFeesAddress o P.== cdFeesAddress i)
+      P.&& (field P.== "feeAmount" P.|| cdFeesAmount o P.== cdFeesAmount i)
+      P.&& (field P.== "categories" P.|| cdCategories o P.== cdCategories i)
+      P.&& cdMultisig o P.== cdMultisig i
+      P.&& (field P.== "proposalDuration" P.|| cdProposalDuration o P.== cdProposalDuration i)
+      P.&& cdProjectPolicyId o P.== cdProjectPolicyId i
+      P.&& cdProjectVaultHash o P.== cdProjectVaultHash i
+      P.&& cdVotingHash o P.== cdVotingHash i
+      P.&& cdCotPolicyId o P.== cdCotPolicyId i
+      P.&& cdCetPolicyId o P.== cdCetPolicyId i
+      P.&& cdUserVaultHash o P.== cdUserVaultHash i
+
+    -- Script hash fields: preserve all except the one being updated
+    {-# INLINEABLE preservesScriptHashExcept #-}
+    preservesScriptHashExcept :: P.BuiltinByteString -> ConfigDatum -> ConfigDatum -> Bool
+    preservesScriptHashExcept field i o =
+      cdFeesAddress o P.== cdFeesAddress i
+      P.&& cdFeesAmount o P.== cdFeesAmount i
+      P.&& cdCategories o P.== cdCategories i
+      P.&& cdMultisig o P.== cdMultisig i
+      P.&& cdProposalDuration o P.== cdProposalDuration i
+      P.&& (field P.== "projectPolicy" P.|| cdProjectPolicyId o P.== cdProjectPolicyId i)
+      P.&& (field P.== "projectVault" P.|| cdProjectVaultHash o P.== cdProjectVaultHash i)
+      P.&& (field P.== "voting" P.|| cdVotingHash o P.== cdVotingHash i)
+      P.&& (field P.== "cotPolicy" P.|| cdCotPolicyId o P.== cdCotPolicyId i)
+      P.&& (field P.== "cetPolicy" P.|| cdCetPolicyId o P.== cdCetPolicyId i)
+      P.&& (field P.== "userVault" P.|| cdUserVaultHash o P.== cdUserVaultHash i)
+
+    {-# INLINEABLE lengthOf #-}
+    lengthOf :: [a] -> Integer
+    lengthOf [] = 0
+    lengthOf (_:xs) = 1 P.+ lengthOf xs
+
+    {-# INLINEABLE isCategoryInList #-}
     isCategoryInList :: P.BuiltinByteString -> [P.BuiltinByteString] -> Bool
     isCategoryInList _ [] = False
     isCategoryInList x (y:ys) = x P.== y P.|| isCategoryInList x ys
-    {-# INLINEABLE isCategoryInList #-}
 
+    {-# INLINEABLE verifyScriptHashUpdate #-}
     verifyScriptHashUpdate :: P.BuiltinByteString -> P.BuiltinByteString -> ConfigDatum -> Bool
     verifyScriptHashUpdate field newHash cfg
       | field P.== "projectPolicy"  = cdProjectPolicyId cfg P.== newHash
@@ -589,7 +673,6 @@ spendValidator idNftPolicy ctx =
       | field P.== "cetPolicy"      = cdCetPolicyId cfg P.== newHash
       | field P.== "userVault"      = cdUserVaultHash cfg P.== newHash
       | P.otherwise                 = False
-    {-# INLINEABLE verifyScriptHashUpdate #-}
 
 --------------------------------------------------------------------------------
 -- COMPILED VALIDATORS

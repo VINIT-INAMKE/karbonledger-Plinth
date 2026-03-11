@@ -72,6 +72,10 @@ data Multisig = Multisig
 PlutusTx.makeLift ''Multisig
 PlutusTx.makeIsDataSchemaIndexed ''Multisig [('Multisig, 0)]
 
+instance P.Eq Multisig where
+  {-# INLINEABLE (==) #-}
+  (Multisig r1 s1) == (Multisig r2 s2) = r1 P.== r2 P.&& s1 P.== s2
+
 --------------------------------------------------------------------------------
 -- ERROR TYPES
 --------------------------------------------------------------------------------
