@@ -94,7 +94,6 @@ module Carbonica.Validators.ProjectVault where
 
 import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  Datum (..),
-                                                 PubKeyHash,
                                                  ScriptContext (..),
                                                  ScriptInfo (..),
                                                  TokenName (..),
@@ -102,7 +101,6 @@ import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  TxOutRef,
                                                  getRedeemer)
 import           PlutusLedgerApi.V3.MintValue   (mintValueMinted)
-import           PlutusLedgerApi.V1.Value       (Value)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
