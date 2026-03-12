@@ -26,6 +26,7 @@ module Test.Carbonica.TestHelpers
 
     -- * ScriptContext Builders
   , mkTxInfo
+  , mkTxInfoWithRange
   , mkMintingCtx
   , mkSpendingCtx
 
@@ -69,7 +70,7 @@ import PlutusLedgerApi.V3
     , TxOut (..)
     , TxOutRef (..)
     )
-import PlutusLedgerApi.V1.Interval (always)
+import PlutusLedgerApi.V1.Interval (Interval, always)
 import PlutusLedgerApi.V1.Value (Value, singleton)
 import qualified PlutusLedgerApi.V1.Value as LV
 import PlutusLedgerApi.V3.MintValue (MintValue)
@@ -238,7 +239,11 @@ valueToMintValue v = PlutusTx.unsafeFromBuiltinData (PlutusTx.toBuiltinData v)
 -- do not check. Caller provides signatories, inputs, outputs,
 -- reference inputs, and the mint value (as a plain Value, converted to MintValue internally).
 mkTxInfo :: [PubKeyHash] -> [TxInInfo] -> [TxOut] -> [TxInInfo] -> Value -> TxInfo
-mkTxInfo signers ins outs refs mintVal = TxInfo
+mkTxInfo = mkTxInfoWithRange always
+
+-- | Like mkTxInfo but with a custom valid range (for validators that check time).
+mkTxInfoWithRange :: Interval POSIXTime -> [PubKeyHash] -> [TxInInfo] -> [TxOut] -> [TxInInfo] -> Value -> TxInfo
+mkTxInfoWithRange range signers ins outs refs mintVal = TxInfo
   { txInfoInputs             = ins
   , txInfoReferenceInputs    = refs
   , txInfoOutputs            = outs
@@ -246,7 +251,7 @@ mkTxInfo signers ins outs refs mintVal = TxInfo
   , txInfoMint               = valueToMintValue mintVal
   , txInfoTxCerts            = []
   , txInfoWdrl               = AssocMap.empty
-  , txInfoValidRange         = always
+  , txInfoValidRange         = range
   , txInfoSignatories        = signers
   , txInfoRedeemers          = AssocMap.empty
   , txInfoData               = AssocMap.empty
