@@ -75,7 +75,6 @@ import qualified PlutusLedgerApi.V1.Value as LV
 import PlutusLedgerApi.V3.MintValue (MintValue)
 import qualified PlutusTx
 import qualified PlutusTx.Prelude as P
-import qualified PlutusTx.Builtins as Builtins
 import qualified PlutusTx.AssocMap as AssocMap
 
 import Carbonica.Types.Core
@@ -283,10 +282,10 @@ mkSpendingCtx txInfo red oref datum = ScriptContext txInfo red (SpendingScript o
 --           DaoGovernance.untypedSpendValidator
 testAttackRejected2
   :: String
-  -> (BuiltinData -> BuiltinData -> Builtins.BuiltinUnit)
+  -> (BuiltinData -> BuiltinData -> P.BuiltinUnit)
   -> BuiltinData -> BuiltinData -> TestTree
 testAttackRejected2 name validator param1 ctxData = testCase name $ do
-  result <- try (evaluate (validator param1 ctxData)) :: IO (Either SomeException Builtins.BuiltinUnit)
+  result <- try (evaluate (validator param1 ctxData)) :: IO (Either SomeException P.BuiltinUnit)
   case result of
     Left _  -> return ()  -- P.check/traceError threw exception, attack rejected (PASS)
     Right _ -> assertFailure "Validator should have rejected the attack but returned successfully"
@@ -295,10 +294,10 @@ testAttackRejected2 name validator param1 ctxData = testCase name $ do
 -- Used for: ProjectVault.untypedValidator, CotPolicy.untypedValidator
 testAttackRejected3
   :: String
-  -> (BuiltinData -> BuiltinData -> BuiltinData -> Builtins.BuiltinUnit)
+  -> (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
   -> BuiltinData -> BuiltinData -> BuiltinData -> TestTree
 testAttackRejected3 name validator param1 param2 ctxData = testCase name $ do
-  result <- try (evaluate (validator param1 param2 ctxData)) :: IO (Either SomeException Builtins.BuiltinUnit)
+  result <- try (evaluate (validator param1 param2 ctxData)) :: IO (Either SomeException P.BuiltinUnit)
   case result of
     Left _  -> return ()  -- P.check/traceError threw exception, attack rejected (PASS)
     Right _ -> assertFailure "Validator should have rejected the attack but returned successfully"
@@ -306,10 +305,10 @@ testAttackRejected3 name validator param1 param2 ctxData = testCase name $ do
 -- | Test that a 2-arg untyped validator accepts a legitimate transaction.
 testAttackAccepted2
   :: String
-  -> (BuiltinData -> BuiltinData -> Builtins.BuiltinUnit)
+  -> (BuiltinData -> BuiltinData -> P.BuiltinUnit)
   -> BuiltinData -> BuiltinData -> TestTree
 testAttackAccepted2 name validator param1 ctxData = testCase name $ do
-  result <- try (evaluate (validator param1 ctxData)) :: IO (Either SomeException Builtins.BuiltinUnit)
+  result <- try (evaluate (validator param1 ctxData)) :: IO (Either SomeException P.BuiltinUnit)
   case result of
     Left ex -> assertFailure ("Validator should have accepted but threw: " ++ show ex)
     Right _ -> return ()  -- Returned BuiltinUnit successfully (PASS)
@@ -317,10 +316,10 @@ testAttackAccepted2 name validator param1 ctxData = testCase name $ do
 -- | Test that a 3-arg untyped validator accepts a legitimate transaction.
 testAttackAccepted3
   :: String
-  -> (BuiltinData -> BuiltinData -> BuiltinData -> Builtins.BuiltinUnit)
+  -> (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
   -> BuiltinData -> BuiltinData -> BuiltinData -> TestTree
 testAttackAccepted3 name validator param1 param2 ctxData = testCase name $ do
-  result <- try (evaluate (validator param1 param2 ctxData)) :: IO (Either SomeException Builtins.BuiltinUnit)
+  result <- try (evaluate (validator param1 param2 ctxData)) :: IO (Either SomeException P.BuiltinUnit)
   case result of
     Left ex -> assertFailure ("Validator should have accepted but threw: " ++ show ex)
     Right _ -> return ()  -- Returned BuiltinUnit successfully (PASS)

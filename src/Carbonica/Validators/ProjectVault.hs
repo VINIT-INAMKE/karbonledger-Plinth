@@ -134,13 +134,11 @@ module Carbonica.Validators.ProjectVault where
 
 import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  Datum (..),
-                                                 POSIXTime,
                                                  PubKeyHash,
                                                  ScriptContext (..),
                                                  ScriptInfo (..),
                                                  TokenName (..),
                                                  TxInfo (..),
-                                                 TxOut (..),
                                                  TxOutRef,
                                                  getRedeemer)
 import           PlutusLedgerApi.V3.Contexts   (getContinuingOutputs, txSignedBy)
