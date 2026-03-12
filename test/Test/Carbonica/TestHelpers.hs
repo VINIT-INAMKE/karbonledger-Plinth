@@ -149,7 +149,7 @@ mkTestConfigDatum vaultHash signers required =
     "test_user_vault_000000000000000"     -- userVaultHash
   of
     P.Right cfg -> cfg
-    P.Left _    -> P.error "mkTestConfigDatum: invalid test data"
+    P.Left _    -> error "mkTestConfigDatum: invalid test data"
 
 -- | Build a test Multisig
 mkTestMultisig :: [PubKeyHash] -> Integer -> Multisig
@@ -171,7 +171,7 @@ mkTestProjectDatum status developer cotAmt yesVotes noVotes voters =
     1000000                               -- submitted at (POSIXTime)
   of
     P.Right pd -> pd
-    P.Left _   -> P.error "mkTestProjectDatum: invalid test data"
+    P.Left _   -> error "mkTestProjectDatum: invalid test data"
 
 -- | Build a test GovernanceDatum using the smart constructor.
 mkTestGovernanceDatum
@@ -181,7 +181,7 @@ mkTestGovernanceDatum
 mkTestGovernanceDatum proposalId submitter action votes yesCount noCount abstainCount deadline state =
   case mkGovernanceDatum proposalId submitter action votes yesCount noCount abstainCount deadline state of
     P.Right gd -> gd
-    P.Left _   -> P.error "mkTestGovernanceDatum: invalid test data"
+    P.Left _   -> error "mkTestGovernanceDatum: invalid test data"
 
 --------------------------------------------------------------------------------
 -- TXOUT BUILDERS
