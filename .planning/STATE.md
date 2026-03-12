@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-high-vulnerability-fixes/03-01-PLAN.md
-last_updated: "2026-03-12T15:30:56Z"
-last_activity: 2026-03-12 -- Completed 03-01 High vulnerability fixes (HIGH-01 through HIGH-04)
+stopped_at: Completed 03-high-vulnerability-fixes/03-02-PLAN.md
+last_updated: "2026-03-12T15:52:34Z"
+last_activity: 2026-03-12 -- Completed 03-02 Attack scenario tests
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -24,19 +24,19 @@ See: .planning/PROJECT.md (updated 2026-03-11)
 
 ## Current Position
 
-Phase: 3 of 5 (High Vulnerability Fixes) -- IN PROGRESS
-Plan: 1 of 2 in current phase (03-01 complete)
-Status: 03-01 complete, 03-02 remaining
-Last activity: 2026-03-12 -- Completed 03-01 High vulnerability fixes (HIGH-01 through HIGH-04)
+Phase: 3 of 5 (High Vulnerability Fixes) -- COMPLETE
+Plan: 2 of 2 in current phase (all complete)
+Status: Phase 3 complete, ready for Phase 4
+Last activity: 2026-03-12 -- Completed 03-02 Attack scenario tests (TEST-02, HIGH attack tests)
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 6min
-- Total execution time: ~35 min
+- Total plans completed: 7
+- Average duration: 7min
+- Total execution time: ~51 min
 
 **By Phase:**
 
@@ -44,11 +44,11 @@ Progress: [█████████░] 86%
 |-------|-------|-------|----------|
 | 01-code-quality-foundation | 3/3 | ~15min | ~5min |
 | 02-critical-vulnerability-fixes | 2/2 | ~14min | ~7min |
-| 03-high-vulnerability-fixes | 1/2 | ~6min | ~6min |
+| 03-high-vulnerability-fixes | 2/2 | ~22min | ~11min |
 
 **Recent Trend:**
-- Last 3 plans: 02-02 (4min), 02-01 (10min), 03-01 (6min)
-- Trend: stable
+- Last 3 plans: 02-01 (10min), 03-01 (6min), 03-02 (16min)
+- Trend: test infrastructure plans take longer (expected -- ScriptContext construction is non-trivial)
 
 *Updated after each plan completion*
 | Phase 01-code-quality-foundation P01 | 9min | 2 tasks | 8 files |
@@ -57,6 +57,7 @@ Progress: [█████████░] 86%
 | Phase 02 P02 | 4min | 2 tasks | 3 files |
 | Phase 02 P01 | 10min | 2 tasks | 2 files |
 | Phase 03 P01 | 6min | 3 tasks | 3 files |
+| Phase 03 P02 | 16min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,10 @@ Recent decisions affecting current work:
 - [Phase 03-01]: Use getScriptHash accessor to compare against cdProjectVaultHash for exact destination pinning
 - [Phase 03-01]: Added voter PubKeyHash binding to ProjectVault extracting first signer with PVE004 guard
 - [Phase 03-01]: Multisig guard placed as first check in validateExecute/validateReject for fail-fast authorization
+- [Phase 03-02]: MintValue via Value->BuiltinData->MintValue round-trip coercion (same Data encoding, no direct constructor available)
+- [Phase 03-02]: LV.Lovelace qualified import for TxInfo fee field to disambiguate from Carbonica.Types.Core.Lovelace
+- [Phase 03-02]: Enumerated HUnit test cases over QuickCheck for explicit exploit variant naming and traceability
+- [Phase 03-02]: Positive test cases in each vulnerability group to verify patched validators still accept legitimate transactions
 
 ### Pending Todos
 
@@ -90,10 +95,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Constructing valid ScriptContext values for attack tests is non-trivial (no mocking framework exists). Phase 3 planning must address test infrastructure approach.
+- ~~Constructing valid ScriptContext values for attack tests is non-trivial (no mocking framework exists).~~ RESOLVED: TestHelpers module with builder functions (mkTxInfo, mkMintingCtx, mkSpendingCtx) reduces boilerplate. MintValue coercion via BuiltinData round-trip.
 
 ## Session Continuity
 
-Last session: 2026-03-12T15:30:56Z
-Stopped at: Completed 03-high-vulnerability-fixes/03-01-PLAN.md
-Resume file: .planning/phases/03-high-vulnerability-fixes/03-01-SUMMARY.md
+Last session: 2026-03-12T15:52:34Z
+Stopped at: Completed 03-high-vulnerability-fixes/03-02-PLAN.md
+Resume file: .planning/phases/03-high-vulnerability-fixes/03-02-SUMMARY.md
