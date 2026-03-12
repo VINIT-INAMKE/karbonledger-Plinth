@@ -71,6 +71,8 @@ import PlutusLedgerApi.V3
     )
 import PlutusLedgerApi.V1.Interval (always)
 import PlutusLedgerApi.V1.Value (Value, singleton)
+import qualified PlutusLedgerApi.V1.Value as LV
+import PlutusLedgerApi.V3.MintValue (MintValue)
 import qualified PlutusTx
 import qualified PlutusTx.Prelude as P
 import qualified PlutusTx.Builtins as Builtins
@@ -225,19 +227,24 @@ mkRefInputWithConfig idPolicy cfg =
 -- SCRIPTCONTEXT BUILDERS
 --------------------------------------------------------------------------------
 
+-- | Coerce a Value to MintValue via BuiltinData round-trip.
+-- Both types have the same on-chain Data representation (Map CurrencySymbol (Map TokenName Integer)).
+-- This is safe for tests where we need to construct TxInfo with a mint field.
+-- NOTE: If plutus-ledger-api 1.56.0.0 exports a direct MintValue constructor or
+-- unsafeMintValue, prefer that instead.
+valueToMintValue :: Value -> MintValue
+valueToMintValue v = PlutusTx.unsafeFromBuiltinData (PlutusTx.toBuiltinData v)
+
 -- | Build a TxInfo with sensible defaults for fields validators typically
 -- do not check. Caller provides signatories, inputs, outputs,
--- reference inputs, and the mint value (as a plain Value, wrapped internally).
---
--- NOTE: MintValue construction may need adjustment per plutus-ledger-api 1.56.0.0 exports.
--- We pass a Value and wrap it. If the API provides a direct constructor, adjust here.
+-- reference inputs, and the mint value (as a plain Value, converted to MintValue internally).
 mkTxInfo :: [PubKeyHash] -> [TxInInfo] -> [TxOut] -> [TxInInfo] -> Value -> TxInfo
 mkTxInfo signers ins outs refs mintVal = TxInfo
   { txInfoInputs             = ins
   , txInfoReferenceInputs    = refs
   , txInfoOutputs            = outs
-  , txInfoFee                = Lovelace 0
-  , txInfoMint               = mintVal    -- In Plutus V3 this may be MintValue; adjust if needed
+  , txInfoFee                = LV.Lovelace 0
+  , txInfoMint               = valueToMintValue mintVal
   , txInfoTxCerts            = []
   , txInfoWdrl               = AssocMap.empty
   , txInfoValidRange         = always
