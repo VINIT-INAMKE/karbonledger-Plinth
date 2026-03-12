@@ -14,10 +14,10 @@
 
 ### High Fixes
 
-- [ ] **HIGH-01**: ProjectPolicy mint must verify NFT sent to specific ProjectVault script hash (from ConfigDatum)
-- [ ] **HIGH-02**: Replace all trivial signer checks (hasSigners/hasAnySigner) with real txSignedBy verification
-- [ ] **HIGH-03**: DaoGovernance execute/reject must require at least one multisig signer
-- [ ] **HIGH-04**: DaoGovernance vote must verify voter PKH specifically signed (not just any signer)
+- [x] **HIGH-01**: ProjectPolicy mint must verify NFT sent to specific ProjectVault script hash (from ConfigDatum)
+- [x] **HIGH-02**: Replace all trivial signer checks (hasSigners/hasAnySigner) with real txSignedBy verification
+- [x] **HIGH-03**: DaoGovernance execute/reject must require at least one multisig signer
+- [x] **HIGH-04**: DaoGovernance vote must verify voter PKH specifically signed (not just any signer)
 
 ### Medium Fixes
 
@@ -69,10 +69,10 @@
 | CRIT-02 | Phase 2 | Complete |
 | CRIT-03 | Phase 2 | Complete |
 | CRIT-04 | Phase 2 | Complete |
-| HIGH-01 | Phase 3 | Pending |
-| HIGH-02 | Phase 3 | Pending |
-| HIGH-03 | Phase 3 | Pending |
-| HIGH-04 | Phase 3 | Pending |
+| HIGH-01 | Phase 3 | Complete |
+| HIGH-02 | Phase 3 | Complete |
+| HIGH-03 | Phase 3 | Complete |
+| HIGH-04 | Phase 3 | Complete |
 | MED-01 | Phase 4 | Pending |
 | MED-02 | Phase 4 | Pending |
 | MED-03 | Phase 4 | Pending |
