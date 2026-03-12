@@ -393,7 +393,7 @@ crit03_positive_onlyTargetFieldChanged =
         "test_user_vault_000000000000000"
         of
           P.Right cfg -> cfg
-          P.Left _ -> P.error "impossible"
+          P.Left _ -> error "impossible"
 
       inputGov = mkTestGovernanceDatum
         "test_proposal_001" alice (ActionUpdateFeeAmount 200_000_000)
@@ -777,7 +777,7 @@ high03_positive_executeWithMultisig =
         "test_user_vault_000000000000000"
         of
           P.Right cfg -> cfg
-          P.Left _ -> P.error "impossible"
+          P.Left _ -> error "impossible"
       ctx = mkDaoExecuteCtx [alice, bob] high03InputGovExecute high03OutputGovExecute defaultConfig outputCfg
   in testAttackAccepted2
        "HIGH-03-positive: execute with authorized multisig"
