@@ -61,11 +61,11 @@ Plans:
   3. DaoGovernance validateExecute and validateReject both require at least one multisig signer (verified via txSignedBy) before allowing proposal finalization
   4. DaoGovernance vote verifies the specific voter PubKeyHash signed the transaction (not just that any signer exists)
   5. Attack scenario tests exist for all 4 critical vulnerabilities: each test constructs a malicious transaction exploiting the old vulnerability and confirms the patched validator rejects it
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md -- Patch HIGH-01 (ProjectPolicy NFT destination), HIGH-02/HIGH-04 (txSignedBy in DaoGovernance + ProjectVault), HIGH-03 (multisig in execute/reject)
+- [ ] 03-02-PLAN.md -- Create TestHelpers + AttackScenarios modules with attack tests for CRIT-01 through CRIT-04 and HIGH-01 through HIGH-04
 
 ### Phase 4: Medium and Low Fixes
 **Goal**: Marketplace cannot be exploited via fake listings, zero-price trades, or royalty evasion; governance vote datum integrity is fully enforced; disabled features are properly documented
@@ -106,6 +106,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Code Quality Foundation | 3/3 | Complete    | 2026-03-11 |
 | 2. Critical Vulnerability Fixes | 2/2 | Complete | 2026-03-11 |
-| 3. High Vulnerability Fixes | 0/0 | Not started | - |
+| 3. High Vulnerability Fixes | 0/2 | In progress | - |
 | 4. Medium and Low Fixes | 0/0 | Not started | - |
 | 5. Comprehensive Testing and Documentation | 0/0 | Not started | - |
