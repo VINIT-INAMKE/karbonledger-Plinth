@@ -9,6 +9,7 @@ import Test.Carbonica.Types (typeTests)
 import Test.Carbonica.Validators (validatorTests)
 import Test.Carbonica.Common (commonTests)
 import Test.Carbonica.Properties.SmartConstructors (propertyTests)
+import Test.Carbonica.AttackScenarios (attackScenarioTests)
 
 main :: IO ()
 main = defaultMain $ testGroup "Carbonica Tests"
@@ -16,4 +17,5 @@ main = defaultMain $ testGroup "Carbonica Tests"
   , validatorTests
   , commonTests
   , propertyTests
+  , attackScenarioTests
   ]
