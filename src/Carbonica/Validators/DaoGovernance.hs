@@ -111,6 +111,14 @@ Reject Action:
                    or ActionUpdateRequired sets value outside [1, signers count]
             Fix: Ensure required threshold is achievable after the change
 
+   DGE017 - Execute without multisig authorization
+            Cause: Transaction signatories do not satisfy multisig threshold for proposal execution
+            Fix: Required number of authorized multisig members must sign before executing
+
+   DGE018 - Reject without multisig authorization
+            Cause: Transaction signatories do not satisfy multisig threshold for proposal rejection
+            Fix: Required number of authorized multisig members must sign before rejecting
+
    ══════════════════════════════════════════════════════════════════════════
 -}
 
@@ -470,12 +478,19 @@ spendValidator idNftPolicy ctx =
       {-# INLINEABLE validateExecute #-}
       validateExecute :: GovernanceDatum -> Bool
       validateExecute inputDatum =
-        P.traceIfFalse "DGE009" isInProgress
+        P.traceIfFalse "DGE017" multisigAuthorized
+        P.&& P.traceIfFalse "DGE009" isInProgress
         P.&& P.traceIfFalse "DGE009" afterDeadline
         P.&& P.traceIfFalse "DGE009" yesWins
         P.&& P.traceIfFalse "DGE009" outputIsExecuted
         P.&& P.traceIfFalse "DGE011" configUpdatedCorrectly
         where
+          multisigAuthorized = case configDatum of
+            P.Nothing  -> P.traceError "DGE008"
+            P.Just cfg ->
+              let ms = cdMultisig cfg
+              in validateMultisig signatories (msSigners ms) (msRequired ms)
+
           outDatum :: GovernanceDatum
           outDatum = case outputDatum of
             P.Just d -> d
@@ -506,11 +521,18 @@ spendValidator idNftPolicy ctx =
       {-# INLINEABLE validateReject #-}
       validateReject :: GovernanceDatum -> Bool
       validateReject inputDatum =
-        P.traceIfFalse "DGE009" isInProgress
+        P.traceIfFalse "DGE018" multisigAuthorized
+        P.&& P.traceIfFalse "DGE009" isInProgress
         P.&& P.traceIfFalse "DGE009" afterDeadline
         P.&& P.traceIfFalse "DGE009" noWins
         P.&& P.traceIfFalse "DGE009" outputIsRejected
         where
+          multisigAuthorized = case configDatum of
+            P.Nothing  -> P.traceError "DGE008"
+            P.Just cfg ->
+              let ms = cdMultisig cfg
+              in validateMultisig signatories (msSigners ms) (msRequired ms)
+
           outDatum :: GovernanceDatum
           outDatum = case outputDatum of
             P.Just d -> d
