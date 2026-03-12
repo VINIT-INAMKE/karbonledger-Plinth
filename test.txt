@@ -1,6 +1,6 @@
 Build profile: -w ghc-9.6.6 -O1
 In order, the following will be built (use -v for more details):
- - smartcontracts-0.1.0.0 (test:carbonica-tests) (first run)
+ - smartcontracts-0.1.0.0 (test:carbonica-tests) (ephemeral targets)
 Preprocessing test suite 'carbonica-tests' for smartcontracts-0.1.0.0...
 Building test suite 'carbonica-tests' for smartcontracts-0.1.0.0...
 Running 1 test suites...
@@ -65,6 +65,12 @@ Carbonica Tests
       validateMultisig fails with fewer than required:           OK
       validateMultisig fails with 0 signers:                     OK
       validateMultisig ignores unauthorized signers:             OK
+    Multisig Equality (P.Eq)
+      equal multisigs return True:                               OK
+      different msRequired returns False:                        OK
+      different msSigners returns False:                         OK
+      empty signers list equality:                               OK
+      different length signers returns False:                    OK
     Value Helpers
       sumQty sums positive integers correctly:                   OK
       sumQty returns 0 for empty list:                           OK
@@ -106,8 +112,7 @@ Carbonica Tests
       Non-negative COT amounts accepted:                         OK
         +++ OK, passed 100 tests.
 
-All 68 tests passed (0.01s)
-
+All 73 tests passed (0.01s)
 Test suite carbonica-tests: PASS
 Test suite logged to:
 /home/vinit/code/karbonledger-Plinth/././dist-newstyle/build/x86_64-linux/ghc-9.6.6/smartcontracts-0.1.0.0/t/carbonica-tests/test/smartcontracts-0.1.0.0-carbonica-tests.log
