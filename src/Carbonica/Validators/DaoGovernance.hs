@@ -48,9 +48,9 @@ Reject Action:
             Cause: Redeemer bytes don't deserialize to DaoMintRedeemer
             Fix: Verify redeemer structure matches DaoMintRedeemer schema
 
-   DGE002 - Submitter must sign
-            Cause: No signatures in transaction for proposal submission
-            Fix: Include at least one signature
+   DGE002 - Voter did not sign transaction
+            Cause: The voter's PubKeyHash is not in txInfoSignatories (verified via txSignedBy)
+            Fix: Ensure the specific voter signs the transaction
 
    DGE003 - Output missing proposal NFT
             Cause: No output contains the proposal NFT being minted
@@ -128,7 +128,7 @@ import           PlutusLedgerApi.V3             (CurrencySymbol,
                                                  TxOut (..),
                                                  getRedeemer,
                                                  txInfoValidRange)
-import           PlutusLedgerApi.V3.Contexts    (getContinuingOutputs)
+import           PlutusLedgerApi.V3.Contexts    (getContinuingOutputs, txSignedBy)
 import           PlutusLedgerApi.V1.Interval    (before)
 import           PlutusLedgerApi.V1.Value       (valueOf)
 import           PlutusTx
@@ -422,10 +422,8 @@ spendValidator idNftPolicy ctx =
           deadline = gdDeadline inputDatum
           beforeDeadline = before deadline validRange
 
-          -- At least one signer present
-          voterSigned = case signatories of
-            [] -> False
-            _  -> True
+          -- Voter specifically signed (verified via txSignedBy)
+          voterSigned = txSignedBy txInfo voter
 
           -- Get voter (first signer)
           voter :: PubKeyHash

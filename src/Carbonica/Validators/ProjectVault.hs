@@ -51,9 +51,9 @@ PHASE 4 OPTIMIZATIONS:
             Cause: No reference input contains ID NFT with ConfigDatum
             Fix: Include config holder as reference input
 
-   PVE004 - Voter not signed
-            Cause: Signer's PKH not in transaction signatures
-            Fix: Ensure voter signs the transaction
+   PVE004 - Voter did not sign transaction
+            Cause: The voter's PubKeyHash is not verified via txSignedBy
+            Fix: Ensure the specific voter signs the transaction
 
    PVE005 - Voter not in multisig
             Cause: Signer not in ConfigDatum.cdMultisig.msSigners
@@ -135,6 +135,7 @@ module Carbonica.Validators.ProjectVault where
 import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  Datum (..),
                                                  POSIXTime,
+                                                 PubKeyHash,
                                                  ScriptContext (..),
                                                  ScriptInfo (..),
                                                  TokenName (..),
@@ -142,7 +143,7 @@ import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  TxOut (..),
                                                  TxOutRef,
                                                  getRedeemer)
-import           PlutusLedgerApi.V3.Contexts   (getContinuingOutputs)
+import           PlutusLedgerApi.V3.Contexts   (getContinuingOutputs, txSignedBy)
 import           PlutusLedgerApi.V3.MintValue   (mintValueMinted)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
@@ -269,10 +270,15 @@ typedValidator idNftPolicy projectPolicy ctx =
           {-# INLINE existingVoters #-}
           existingVoters = pdVoters projectDatum
 
+          -- Voter specifically signed (verified via txSignedBy)
+          {-# INLINE voter #-}
+          voter :: PubKeyHash
+          voter = case signatories of
+            (s:_) -> s
+            []    -> P.traceError "PVE004"
+
           {-# INLINE voterSigned #-}
-          voterSigned = case signatories of
-            [] -> False
-            _  -> True
+          voterSigned = txSignedBy txInfo voter
 
           {-# INLINE voterInMultisig #-}
           voterInMultisig = anySignerInList signatories multisigSigners
