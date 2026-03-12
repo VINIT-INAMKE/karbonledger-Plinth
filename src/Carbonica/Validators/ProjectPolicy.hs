@@ -64,6 +64,10 @@ PHASE 4 OPTIMIZATIONS:
             Cause: Not all tokens under policy have negative quantity
             Fix: Ensure all minted tokens are being burned (qty < 0)
 
+   PPE009 - NFT output missing inline datum
+            Cause: Project output does not have an inline datum attached
+            Fix: Send NFT to output with OutputDatum (inline datum)
+
    ══════════════════════════════════════════════════════════════════════════
 -}
 
@@ -76,6 +80,7 @@ import           PlutusLedgerApi.V3             (Address (..),
                                                  OutputDatum (..),
                                                  PubKeyHash,
                                                  ScriptContext (..),
+                                                 ScriptHash (..),
                                                  ScriptInfo (..),
                                                  TokenName (..),
                                                  TxInfo (..),
@@ -89,6 +94,7 @@ import qualified PlutusTx.Prelude               as P
 import           Carbonica.Types.Config         (cdCategories,
                                                  cdFeesAddress,
                                                  cdFeesAmount,
+                                                 cdProjectVaultHash,
                                                  identificationTokenName)
 import           Carbonica.Types.Project        (ProjectDatum,
                                                  pdCategory,
@@ -184,6 +190,7 @@ typedValidator idNftPolicy ctx =
         P.&& P.traceIfFalse "PPE005" categoryValid
         P.&& P.traceIfFalse "PPE006" feePaid
         P.&& P.traceIfFalse "PPE007" nftSentToScript
+        P.&& P.traceIfFalse "PPE009" projectOutputHasDatum
         where
           -- Exactly 1 token minted
           {-# INLINE ownTokens #-}
@@ -219,14 +226,22 @@ typedValidator idNftPolicy ctx =
           {-# INLINE feePaid #-}
           feePaid = verifyFeePayment outputs (cdFeesAddress config) (cdFeesAmount config)
 
-          -- NFT and ProjectDatum sent to script address
+          -- NFT and ProjectDatum sent to exact ProjectVault script
           {-# INLINE nftSentToScript #-}
           nftSentToScript = case projectOutput of
             P.Nothing -> False
             P.Just (txOut, _) ->
               case addressCredential (txOutAddress txOut) of
-                ScriptCredential _ -> True
-                _                  -> False
+                ScriptCredential sh -> getScriptHash sh P.== cdProjectVaultHash config
+                _                   -> False
+
+          -- Project output must have inline datum
+          {-# INLINE projectOutputHasDatum #-}
+          projectOutputHasDatum = case projectOutput of
+            P.Nothing -> False
+            P.Just (txOut, _) -> case txOutDatum txOut of
+              OutputDatum _ -> True
+              _             -> False
 
       --------------------------------------------------------------------------------
       -- BURN CHECK
