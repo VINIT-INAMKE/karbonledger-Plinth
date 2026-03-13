@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: medium-and-low-fixes
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-13
+validated: 2026-03-13
 ---
 
 # Phase 4 — Validation Strategy
@@ -38,11 +39,11 @@ created: 2026-03-13
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 04-01-01 | 01 | 1 | MED-01 | attack (HUnit) | `cabal test carbonica-tests` | TBD | ⬜ pending |
-| 04-01-02 | 01 | 1 | MED-02 | attack (HUnit) | `cabal test carbonica-tests` | TBD | ⬜ pending |
-| 04-01-03 | 01 | 1 | MED-03 | attack (HUnit) | `cabal test carbonica-tests` | TBD | ⬜ pending |
-| 04-02-01 | 02 | 1 | MED-04 | attack (HUnit) | `cabal test carbonica-tests` | TBD | ⬜ pending |
-| 04-02-02 | 02 | 1 | LOW-02 | documentation | N/A (manual review) | N/A | ⬜ pending |
+| 04-01-01 | 01 | 1 | MED-01 | attack (HUnit) | `cabal test carbonica-tests` | `test/Test/Carbonica/AttackScenarios.hs` (med01Tests: 4 cases) | ✅ green |
+| 04-01-02 | 01 | 1 | MED-02 | attack (HUnit) | `cabal test carbonica-tests` | `test/Test/Carbonica/AttackScenarios.hs` (med02Tests: 4 cases) | ✅ green |
+| 04-01-03 | 01 | 1 | MED-03 | attack (HUnit) | `cabal test carbonica-tests` | `test/Test/Carbonica/AttackScenarios.hs` (med03Tests: 3 cases) | ✅ green |
+| 04-02-01 | 02 | 1 | MED-04 | attack (HUnit) + property (QC) | `cabal test carbonica-tests` | `AttackScenarios.hs` (med04Tests: 4 cases) + `DatumIntegrity.hs` (3 props) | ✅ green |
+| 04-02-02 | 02 | 1 | LOW-02 | documentation | N/A (manual review) | N/A | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -68,11 +69,32 @@ The only prerequisite is: the `ProposalAction P.Eq` instance must be added to `C
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated 2026-03-13
+
+---
+
+## Validation Audit 2026-03-13
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+### Test Coverage Detail
+
+| Requirement | Test File | Test Function | Cases |
+|-------------|-----------|---------------|-------|
+| MED-01 | `test/Test/Carbonica/AttackScenarios.hs` | `med01Tests` | empty UTxO (MKE007), wrong token (MKE007), positive, withdraw regression |
+| MED-02 | `test/Test/Carbonica/AttackScenarios.hs` | `med02Tests` | zero price (MKE008), negative price (MKE008), positive, withdraw regression |
+| MED-03 | `test/Test/Carbonica/AttackScenarios.hs` | `med03Tests` | rounding evasion (MKE004), royalty floor paid, withdraw regression |
+| MED-04 | `test/Test/Carbonica/AttackScenarios.hs` | `med04Tests` | submitter mutated (DGE019), action mutated (DGE020), deadline mutated (DGE021), positive |
+| MED-04 | `test/Test/Carbonica/Properties/DatumIntegrity.hs` | `daoVoteDatumIntegrityTests` | prop_dgVoteRejectsMutatedSubmitter, prop_dgVoteRejectsMutatedAction, prop_dgVoteRejectsMutatedDeadline |
+| LOW-02 | `src/Carbonica/Validators/UserVault.hs` | N/A (manual) | V2-02 documentation verified in 5 locations |
