@@ -79,7 +79,6 @@ import           PlutusLedgerApi.V3             (Address (..),
                                                  TxOutRef (..))
 import           PlutusLedgerApi.V1.Value       (Value, valueOf, flattenValue,
                                                  lovelaceValueOf)
-import qualified PlutusTx.Builtins              as Builtins
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
@@ -374,22 +373,6 @@ getMintedAmountForToken ((cs, tkn, qty):xs) policy targetTkn =
   if cs P.== policy P.&& tkn P.== targetTkn
     then qty
     else getMintedAmountForToken xs policy targetTkn
-
---------------------------------------------------------------------------------
--- TOKEN NAME GENERATION
---------------------------------------------------------------------------------
-
--- | Generate unique token name from TxOutRef (one-shot pattern)
---
---   Implementation:
---     blake2b_224(serialise(oref))
---
---   This ensures each minted token has a unique name derived from the
---   consumed UTxO, preventing double-minting.
-{-# INLINEABLE tokenNameFromOref #-}
-tokenNameFromOref :: TxOutRef -> TokenName
-tokenNameFromOref oref = TokenName $
-  Builtins.blake2b_224 (Builtins.serialiseData (PlutusTx.toBuiltinData oref))
 
 --------------------------------------------------------------------------------
 -- PAYOUT VERIFICATION
