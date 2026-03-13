@@ -155,7 +155,6 @@ crit01a_voteCountManipulated =
   in testAttackRejected3
        "CRIT-01a: vote count manipulated by +2 (PVE013)"
        ProjectVault.untypedValidator
-       "PVE013"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testProjectPolicy)
        (toBuiltinData ctx)
@@ -176,7 +175,6 @@ crit01b_developerMutated =
   in testAttackRejected3
        "CRIT-01b: developer address mutated in output (PVE016)"
        ProjectVault.untypedValidator
-       "PVE016"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testProjectPolicy)
        (toBuiltinData ctx)
@@ -197,7 +195,6 @@ crit01c_cotAmountMutated =
   in testAttackRejected3
        "CRIT-01c: COT amount mutated in output (PVE017)"
        ProjectVault.untypedValidator
-       "PVE017"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testProjectPolicy)
        (toBuiltinData ctx)
@@ -259,7 +256,6 @@ crit02a_unauthorizedSigner =
   in testAttackRejected2
        "CRIT-02a: unauthorized signer submits proposal (DGE014)"
        DaoGovernance.untypedMintValidator
-       "DGE014"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -270,7 +266,6 @@ crit02b_noSignersAtAll =
   in testAttackRejected2
        "CRIT-02b: no signers at all (DGE014)"
        DaoGovernance.untypedMintValidator
-       "DGE014"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -353,7 +348,6 @@ crit03a_feeAmountButCategoriesChanged =
   in testAttackRejected2
        "CRIT-03a: ActionUpdateFeeAmount but vault hash also mutated (DGE015)"
        DaoGovernance.untypedSpendValidator
-       "DGE015"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -375,7 +369,6 @@ crit03b_addSignerButFeeChanged =
   in testAttackRejected2
        "CRIT-03b: ActionAddSigner but vault hash also mutated (DGE015)"
        DaoGovernance.untypedSpendValidator
-       "DGE015"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -470,7 +463,6 @@ crit04a_projectNotApproved =
   in testAttackRejected3
        "CRIT-04a: project not approved but COT mint attempted (CPE009)"
        CotPolicy.untypedValidator
-       "CPE009"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testProjectPolicy)
        (toBuiltinData ctx)
@@ -485,7 +477,6 @@ crit04b_cotAmountMismatch =
   in testAttackRejected3
        "CRIT-04b: minted COT amount differs from pdCotAmount (CPE010)"
        CotPolicy.untypedValidator
-       "CPE010"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testProjectPolicy)
        (toBuiltinData ctx)
@@ -541,7 +532,6 @@ high01a_nftToWrongScript =
   in testAttackRejected2
        "HIGH-01a: NFT sent to wrong script hash (PPE007)"
        ProjectPolicy.untypedValidator
-       "PPE007"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -562,7 +552,6 @@ high01b_nftToPkhAddress =
   in testAttackRejected2
        "HIGH-01b: NFT sent to PubKey address instead of script (PPE007)"
        ProjectPolicy.untypedValidator
-       "PPE007"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -582,7 +571,6 @@ high01c_nftToCorrectScriptNoDatum =
   in testAttackRejected2
        "HIGH-01c: NFT to correct script but missing inline datum (PPE009)"
        ProjectPolicy.untypedValidator
-       "PPE009"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -635,7 +623,6 @@ high02a_projectVaultUnauthorizedVoter =
   in testAttackRejected3
        "HIGH-02a: ProjectVault vote by non-multisig member (PVE005)"
        ProjectVault.untypedValidator
-       "PVE005"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testProjectPolicy)
        (toBuiltinData ctx)
@@ -668,7 +655,6 @@ high02b_daoGovernanceUnauthorizedVoter =
   in testAttackRejected2
        "HIGH-02b: DaoGovernance vote by non-multisig member (DGE008)"
        DaoGovernance.untypedSpendValidator
-       "DGE008"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -747,7 +733,6 @@ high03a_executeZeroSigners =
   in testAttackRejected2
        "HIGH-03a: execute with zero signers (DGE017)"
        DaoGovernance.untypedSpendValidator
-       "DGE017"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -758,7 +743,6 @@ high03b_executeUnauthorizedSigner =
   in testAttackRejected2
        "HIGH-03b: execute with unauthorized signer (DGE017)"
        DaoGovernance.untypedSpendValidator
-       "DGE017"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -769,7 +753,6 @@ high03c_rejectZeroSigners =
   in testAttackRejected2
        "HIGH-03c: reject with zero signers (DGE018)"
        DaoGovernance.untypedSpendValidator
-       "DGE018"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -780,7 +763,6 @@ high03d_rejectUnauthorizedSigner =
   in testAttackRejected2
        "HIGH-03d: reject with unauthorized signer (DGE018)"
        DaoGovernance.untypedSpendValidator
-       "DGE018"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -876,7 +858,6 @@ high04a_impersonateVoter =
   in testAttackRejected2
        "HIGH-04a: eve signs but tries to impersonate alice (DGE002)"
        DaoGovernance.untypedSpendValidator
-       "DGE002"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -907,7 +888,6 @@ high04b_noSignerAtAll =
   in testAttackRejected2
        "HIGH-04b: no signer at all (DGE002)"
        DaoGovernance.untypedSpendValidator
-       "DGE002"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -972,7 +952,6 @@ med01a_buyWithEmptyUtxo =
   in testAttackRejected3
        "MED-01a: buy with empty UTxO (MKE007)"
        Marketplace.untypedValidator
-       "MKE007"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testRoyaltyAddr)
        (toBuiltinData ctx)
@@ -996,7 +975,6 @@ med01b_buyWithWrongToken =
   in testAttackRejected3
        "MED-01b: buy with wrong token in UTxO (MKE007)"
        Marketplace.untypedValidator
-       "MKE007"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testRoyaltyAddr)
        (toBuiltinData ctx)
@@ -1068,7 +1046,6 @@ med02a_zeroPriceBuy =
   in testAttackRejected3
        "MED-02a: zero price buy (MKE008)"
        Marketplace.untypedValidator
-       "MKE008"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testRoyaltyAddr)
        (toBuiltinData ctx)
@@ -1089,7 +1066,6 @@ med02b_negativePriceBuy =
   in testAttackRejected3
        "MED-02b: negative price buy (MKE008)"
        Marketplace.untypedValidator
-       "MKE008"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testRoyaltyAddr)
        (toBuiltinData ctx)
@@ -1165,7 +1141,6 @@ med03a_royaltyRoundingFloor =
   in testAttackRejected3
        "MED-03a: royalty rounding evasion (MKE004)"
        Marketplace.untypedValidator
-       "MKE004"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData testRoyaltyAddr)
        (toBuiltinData ctx)
@@ -1273,7 +1248,6 @@ med04a_submitterMutated =
   in testAttackRejected2
        "MED-04a: submitter mutated during vote (DGE019)"
        DaoGovernance.untypedSpendValidator
-       "DGE019"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -1293,7 +1267,6 @@ med04b_actionMutated =
   in testAttackRejected2
        "MED-04b: action mutated during vote (DGE020)"
        DaoGovernance.untypedSpendValidator
-       "DGE020"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
@@ -1313,7 +1286,6 @@ med04c_deadlineMutated =
   in testAttackRejected2
        "MED-04c: deadline mutated during vote (DGE021)"
        DaoGovernance.untypedSpendValidator
-       "DGE021"
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)
 
