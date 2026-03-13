@@ -168,6 +168,7 @@ import           Carbonica.Validators.Common    (anySignerInList,
                                                  countMatching,
                                                  extractDatum,
                                                  findConfigDatum,
+                                                 isInList,
                                                  payoutTokenExact)
 
 --------------------------------------------------------------------------------
@@ -297,9 +298,13 @@ typedValidator idNftPolicy projectPolicy ctx =
                  P.||
                  (pdNoVotes outDatum P.== pdNoVotes projectDatum P.+ 1
                   P.&& pdYesVotes outDatum P.== pdYesVotes projectDatum))
-              -- Voter added to voters list (length +1)
-              P.&& P.traceIfFalse "PVE014"
-                (listLength (pdVoters outDatum) P.== listLength (pdVoters projectDatum) P.+ 1)
+              -- Voter added to voters list: must be prepended, must be a multisig signer who signed
+              P.&& P.traceIfFalse "PVE014" (case pdVoters outDatum of
+                (newVoter:restVoters) ->
+                  isInList newVoter multisigSigners
+                  P.&& isInList newVoter signatories
+                  P.&& restVoters P.== pdVoters projectDatum
+                [] -> False)
               -- Immutable fields unchanged
               P.&& P.traceIfFalse "PVE015" (pdProjectName outDatum P.== pdProjectName projectDatum)
               P.&& P.traceIfFalse "PVE016" (pdDeveloper outDatum P.== pdDeveloper projectDatum)

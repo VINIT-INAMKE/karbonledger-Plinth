@@ -245,7 +245,9 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
       if txOutAddress o P.== addr
         then let cetInOut = valueOf (txOutValue o) cetP cetT
                  cotInOut = valueOf (txOutValue o) cotP cotT
-             in cetInOut P.== expCet P.&& cotInOut P.== expCot
+             in if cetInOut P.== expCet P.&& cotInOut P.== expCot
+                  then True
+                  else verifyRemainingTokensToAddr os addr cetP cotP cetT cotT expCet expCot
         else verifyRemainingTokensToAddr os addr cetP cotP cetT cotT expCet expCot
     {-# INLINEABLE verifyRemainingTokensToAddr #-}
 

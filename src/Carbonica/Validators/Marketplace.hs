@@ -152,6 +152,12 @@ royaltyDenominator :: Integer
 royaltyDenominator = 100
 {-# INLINEABLE royaltyDenominator #-}
 
+-- | Minimum sale price in lovelace (2 ADA).
+-- Prevents royalty dust attacks where micro-priced listings bypass meaningful royalties.
+minSalePrice :: Integer
+minSalePrice = 2_000_000
+{-# INLINEABLE minSalePrice #-}
+
 --------------------------------------------------------------------------------
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
@@ -215,9 +221,9 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
       where
         salePrice = mdAmount mktDatum
 
-        -- MED-02: Price must be positive (checked first to prevent zero-price royalty issues)
+        -- MED-02: Price must meet minimum (prevents royalty dust attacks)
         pricePositive :: Bool
-        pricePositive = salePrice P.> 0
+        pricePositive = salePrice P.>= minSalePrice
 
         -- MED-01: Verify the spent UTxO actually contains the claimed COT tokens
         cotVerified :: Bool
