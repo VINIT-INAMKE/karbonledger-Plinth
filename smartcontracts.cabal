@@ -86,17 +86,15 @@ library
     -- Carbonica Validators (Phase 4)
     Carbonica.Validators.Marketplace
 
--- Blueprint generator commented out until all contracts ready
--- executable gen-blueprint
---   import:         ghc-only-options, plutus-deps
---   hs-source-dirs: app
---   main-is:        GenBlueprint.hs
---   build-depends:
---     , base
---     , bytestring
---     , containers
---     , directory
---     , smartcontracts
+executable gen-scripts
+  import:         ghc-only-options, plutus-deps
+  hs-source-dirs: app
+  main-is:        GenBlueprint.hs
+  build-depends:
+    , base
+    , bytestring
+    , directory
+    , smartcontracts
 
 --------------------------------------------------------------------------------
 -- TEST SUITE

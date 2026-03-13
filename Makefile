@@ -1,22 +1,22 @@
-.PHONY: buildall blueprint clean shell
+.PHONY: buildall scripts clean shell
 
 # Build all contracts
 buildall:
 	cabal build all
 
 build:
-	cabal build 
+	cabal build
 
-# Generate blueprint
-blueprint:
-	cabal run gen-blueprint
+# Generate script envelopes for all validators
+scripts:
+	cabal run gen-scripts
 	@echo ""
-	@echo "Blueprint ready at: blueprints/contract.json"
+	@echo "Script envelopes ready in: scripts/"
 
 # Clean build artifacts
 clean:
 	cabal clean
-	rm -rf blueprints/*.json
+	rm -rf scripts/*.plutus
 	@echo "Cleaned build artifacts"
 
 # Enter nix development shell
