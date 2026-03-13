@@ -1217,7 +1217,9 @@ mkDaoVoteSpendCtx signers inputGov outputGov vote =
         (singleton testProposalPolicy (TokenName "test_proposal_001") 1)
         (Datum (toBuiltinData outputGov))
       configRef = mkRefInputWithConfig testIdNftPolicy defaultConfig
-      txInfo' = mkTxInfo signers [govInput] [govOutput] [configRef] emptyValue
+      -- Valid range must start after deadline for 'before deadline validRange' to hold
+      voteRange = from (oneWeekMs P.+ 1000001)
+      txInfo' = mkTxInfoWithRange voteRange signers [govInput] [govOutput] [configRef] emptyValue
   in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote vote))) govOref inputDatumData
 
 -- | Base input governance datum for MED-04 tests
