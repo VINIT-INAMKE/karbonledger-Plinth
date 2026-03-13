@@ -54,6 +54,14 @@ VALIDATION LOGIC:
             Cause: Listing owner PKH not in transaction signatories
             Fix: Owner must sign the withdrawal transaction
 
+   MKE007 - UTxO does not contain claimed COT tokens
+            Cause: The spent UTxO value does not hold at least mdCotQty of mdCotPolicy/mdCotToken
+            Fix: Ensure listing UTxO actually contains the tokens described in MarketplaceDatum
+
+   MKE008 - Sale price not positive
+            Cause: mdAmount is zero or negative
+            Fix: Ensure listing has a positive sale price (mdAmount > 0)
+
    ══════════════════════════════════════════════════════════════════════════
 -}
 
@@ -68,15 +76,18 @@ import           PlutusLedgerApi.V3             (Address (..),
                                                  ScriptContext (..),
                                                  ScriptInfo (..),
                                                  TokenName,
+                                                 TxInInfo (..),
                                                  TxInfo (..),
                                                  TxOut (..),
+                                                 TxOutRef,
                                                  getRedeemer)
 import           PlutusLedgerApi.V1.Value       (valueOf)
 import           PlutusTx
 import           PlutusTx.Blueprint
 import qualified PlutusTx.Prelude               as P
 
-import           Carbonica.Validators.Common    (isInList,
+import           Carbonica.Validators.Common    (findInputByOutRef,
+                                                 isInList,
                                                  payoutAtLeast)
 
 --------------------------------------------------------------------------------
@@ -161,10 +172,10 @@ royaltyDenominator = 100
 --     1. Owner must sign
 typedValidator :: CurrencySymbol -> PubKeyHash -> ScriptContext -> Bool
 typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
-  SpendingScript _oref (Just (Datum datumData)) ->
+  SpendingScript oref (Just (Datum datumData)) ->
     case PlutusTx.fromBuiltinData datumData of
       P.Nothing -> P.traceError "MKE001"
-      P.Just mktDatum -> validateSpend mktDatum
+      P.Just mktDatum -> validateSpend oref mktDatum
   _ -> P.traceError "MKE000"
   where
     ScriptContext txInfo rawRedeemer scriptInfo = ctx
@@ -184,9 +195,9 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
     {-# INLINEABLE signatories #-}
 
     -- Main validation
-    validateSpend :: MarketplaceDatum -> Bool
-    validateSpend mktDatum = case redeemer of
-      MktBuy      -> validateBuy mktDatum
+    validateSpend :: TxOutRef -> MarketplaceDatum -> Bool
+    validateSpend oref mktDatum = case redeemer of
+      MktBuy      -> validateBuy oref mktDatum
       MktWithdraw -> validateWithdraw mktDatum
     {-# INLINEABLE validateSpend #-}
 
@@ -198,19 +209,36 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
     --   3. Platform receives at least royalty_amount
     --   4. Buyer receives COT tokens (verified via signatories - buyer must sign)
     --------------------------------------------------------------------------------
-    validateBuy :: MarketplaceDatum -> Bool
-    validateBuy mktDatum =
-      P.traceIfFalse "MKE003" sellerPaid
+    validateBuy :: TxOutRef -> MarketplaceDatum -> Bool
+    validateBuy oref mktDatum =
+      P.traceIfFalse "MKE008" pricePositive          -- MED-02: price > 0
+      P.&& P.traceIfFalse "MKE007" cotVerified       -- MED-01: UTxO has claimed COT
+      P.&& P.traceIfFalse "MKE003" sellerPaid
       P.&& P.traceIfFalse "MKE004" platformPaid
       P.&& P.traceIfFalse "MKE005" buyerReceivesCot
       where
         salePrice = mdAmount mktDatum
 
+        -- MED-02: Price must be positive (checked first to prevent zero-price royalty issues)
+        pricePositive :: Bool
+        pricePositive = salePrice P.> 0
+
+        -- MED-01: Verify the spent UTxO actually contains the claimed COT tokens
+        cotVerified :: Bool
+        cotVerified =
+          case findInputByOutRef (txInfoInputs txInfo) oref of
+            P.Nothing -> False
+            P.Just i  ->
+              let actualQty = valueOf (txOutValue (txInInfoResolved i))
+                                (mdCotPolicy mktDatum) (mdCotToken mktDatum)
+              in actualQty P.>= mdCotQty mktDatum
+
         -- Calculate royalty and payout amounts
         -- royalty = amount * royalty_percent / 100
         -- payout = amount - royalty
+        -- MED-03: royalty floor of 1 lovelace to prevent royalty evasion via rounding
         royaltyAmount :: Integer
-        royaltyAmount = (salePrice P.* royaltyNumerator) `P.divide` royaltyDenominator
+        royaltyAmount = P.max 1 ((salePrice P.* royaltyNumerator) `P.divide` royaltyDenominator)
 
         payoutAmount :: Integer
         payoutAmount = salePrice P.- royaltyAmount
