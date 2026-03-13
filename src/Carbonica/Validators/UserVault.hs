@@ -14,6 +14,10 @@ VALIDATION LOGIC:
     - Remaining tokens sent back to user's script address
 
   Action 1 (Withdraw COT): Not yet implemented
+
+  VaultWithdraw action:
+    - DISABLED: Intentionally fails with UVE003 pending V2-02
+    - Will require owner signature and proper authorization when implemented
 -}
 
 {- ══════════════════════════════════════════════════════════════════════════
@@ -32,9 +36,9 @@ VALIDATION LOGIC:
             Cause: Redeemer bytes don't deserialize to UserVaultRedeemer
             Fix: Verify redeemer is VaultOffset or VaultWithdraw
 
-   UVE003 - CET withdrawal not allowed
-            Cause: VaultWithdraw action is not implemented
-            Fix: Use VaultOffset to burn CET with COT
+   UVE003 - CET withdrawal not allowed (intentionally disabled)
+            Cause: VaultWithdraw action is disabled pending V2-02 implementation
+            Fix: Use VaultOffset to burn CET with COT. Withdrawal will be enabled in V2-02.
 
    UVE004 - Owner must sign
             Cause: EmissionDatum owner PKH not in transaction signatories
@@ -145,6 +149,11 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
     validateSpend :: TxOutRef -> EmissionDatum -> Bool
     validateSpend oref emissionDatum = case redeemer of
       VaultOffset _amount -> validateOffset oref emissionDatum
+      -- | VaultWithdraw is intentionally disabled pending V2-02 authorization
+      -- implementation. Currently fails immediately with UVE003. The withdrawal
+      -- feature requires proper authorization checks (owner signature verification,
+      -- partial withdrawal accounting) before it can be safely enabled.
+      -- See: V2-02 in REQUIREMENTS.md
       VaultWithdraw       -> P.traceError "UVE003"
     {-# INLINEABLE validateSpend #-}
 
