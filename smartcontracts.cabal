@@ -1,6 +1,6 @@
 cabal-version:   3.0
 name:            smartcontracts
-version:         0.1.0.0
+version:         1.0.2
 license:         Apache-2.0
 build-type:      Simple
 description:     Cardano Plutus V3 Smart Contract Template
