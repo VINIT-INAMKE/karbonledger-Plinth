@@ -46,11 +46,11 @@ Progress: [██████████] 100%
 | 02-critical-vulnerability-fixes | 2/2 | ~14min | ~7min |
 | 03-high-vulnerability-fixes | 2/2 | ~22min | ~11min |
 | 04-medium-and-low-fixes | 2/2 | ~4min | ~2min |
-| 05-comprehensive-testing-and-documentation | 1/3 | ~5min | ~5min |
+| 05-comprehensive-testing-and-documentation | 3/3 | ~17min | ~6min |
 
 **Recent Trend:**
-- Last 3 plans: 04-01 (2min), 04-02 (2min), 05-01 (5min)
-- Trend: test plans with builder helpers take moderate time
+- Last 3 plans: 05-01 (5min), 05-02 (5min), 05-03 (7min)
+- Trend: documentation plans execute in consistent 5-7min range
 
 *Updated after each plan completion*
 | Phase 01-code-quality-foundation P01 | 9min | 2 tasks | 8 files |
@@ -63,6 +63,7 @@ Progress: [██████████] 100%
 | Phase 04 P01 | 2min | 2 tasks | 2 files |
 | Phase 04 P02 | 2min | 2 tasks | 2 files |
 | Phase 05 P01 | 5min | 2 tasks | 3 files |
+| Phase 05 P03 | 7min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 05-01]: Withdraw regression tests verify Buy-path hardening is properly scoped to MktBuy redeemer
 - [Phase 05-01]: MED-04 uses local mkDaoVoteSpendCtx helper for compact vote-specific context building
 - [Phase 05-01]: Property tests for composite types use concrete known-good values rather than full Arbitrary instances
+- [Phase 05-03]: Core.hs and Emission.hs already fully documented from Phase 1 -- no changes needed
+- [Phase 05-03]: Haddock placed BEFORE INLINEABLE pragma (attaches to next declaration, not previous)
+- [Phase 05-03]: Error registry blocks preserved as plain comments, not converted to Haddock
 
 ### Pending Todos
 
@@ -111,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T10:10:40Z
-Stopped at: Completed 05-comprehensive-testing-and-documentation/05-01-PLAN.md
-Resume file: .planning/phases/05-comprehensive-testing-and-documentation/05-01-SUMMARY.md
+Last session: 2026-03-13T10:11:31Z
+Stopped at: Completed 05-comprehensive-testing-and-documentation/05-03-PLAN.md
+Resume file: .planning/phases/05-comprehensive-testing-and-documentation/05-03-SUMMARY.md
