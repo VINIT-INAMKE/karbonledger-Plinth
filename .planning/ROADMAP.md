@@ -76,11 +76,11 @@ Plans:
   2. Marketplace enforces mdAmount > 0 and calculates royalty with a minimum of 1 lovelace (no zero-royalty transactions possible)
   3. DaoGovernance vote validator verifies all non-vote GovernanceDatum fields (proposal ID, action, deadline, state) remain unchanged in the output datum, and no other vote records are modified
   4. VaultWithdraw redeemer in UserVault has a proper error code and documentation indicating it is intentionally disabled pending V2-02
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- Harden Marketplace validateBuy (UTxO token verification, price floor, royalty floor) and document VaultWithdraw
+- [ ] 04-02-PLAN.md -- Add P.Eq ProposalAction instance and DaoGovernance vote non-vote field integrity checks
 
 ### Phase 5: Comprehensive Testing and Documentation
 **Goal**: Every fix category has attack scenario tests proving exploits are blocked, all smart constructors have property-based tests, datum integrity invariants are verified by properties, and all exported functions have Haddock documentation
@@ -107,5 +107,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Code Quality Foundation | 3/3 | Complete    | 2026-03-11 |
 | 2. Critical Vulnerability Fixes | 2/2 | Complete | 2026-03-11 |
 | 3. High Vulnerability Fixes | 0/2 | In progress | - |
-| 4. Medium and Low Fixes | 0/0 | Not started | - |
+| 4. Medium and Low Fixes | 0/2 | Not started | - |
 | 5. Comprehensive Testing and Documentation | 0/0 | Not started | - |
