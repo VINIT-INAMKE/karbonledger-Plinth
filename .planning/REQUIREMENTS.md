@@ -44,7 +44,7 @@
 - [x] **TEST-02**: Add attack scenario tests for each critical vulnerability fix
 - [x] **TEST-03**: Add attack scenario tests for each high vulnerability fix
 - [x] **TEST-04**: Add property-based tests for all smart constructors
-- [ ] **TEST-05**: Add datum integrity property tests for vote/config update validators
+- [x] **TEST-05**: Add datum integrity property tests for vote/config update validators
 
 ## v2 Requirements
 
@@ -87,7 +87,7 @@
 | TEST-02 | Phase 3 | Complete |
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Complete |
-| TEST-05 | Phase 5 | Pending |
+| TEST-05 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 23 total

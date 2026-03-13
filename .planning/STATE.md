@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
+stopped_at: Completed 05-comprehensive-testing-and-documentation/05-02-PLAN.md
+last_updated: "2026-03-13T10:20:21.218Z"
+last_activity: 2026-03-13 -- Completed 05-03 Haddock documentation for all source modules
+progress:
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 12
+  completed_plans: 12
+  percent: 100
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: executing
 stopped_at: Completed 05-comprehensive-testing-and-documentation/05-03-PLAN.md
 last_updated: "2026-03-13T10:11:31Z"
 last_activity: 2026-03-13 -- Completed 05-03 Haddock documentation for all source modules
 progress:
-  total_phases: 5
+  [██████████] 100%
   completed_phases: 4
   total_plans: 12
   completed_plans: 12
@@ -64,6 +80,7 @@ Progress: [██████████] 100%
 | Phase 04 P02 | 2min | 2 tasks | 2 files |
 | Phase 05 P01 | 5min | 2 tasks | 3 files |
 | Phase 05 P03 | 7min | 2 tasks | 13 files |
+| Phase 05 P02 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -104,6 +121,8 @@ Recent decisions affecting current work:
 - [Phase 05-03]: Core.hs and Emission.hs already fully documented from Phase 1 -- no changes needed
 - [Phase 05-03]: Haddock placed BEFORE INLINEABLE pragma (attaches to next declaration, not previous)
 - [Phase 05-03]: Error registry blocks preserved as plain comments, not converted to Haddock
+- [Phase 05]: Newtype wrappers (ArbPubKeyHash, ArbPOSIXTime) to avoid orphan Arbitrary instances for Plutus types
+- [Phase 05]: ioProperty + try/evaluate pattern for property tests since Plutus validators signal rejection via exceptions
 
 ### Pending Todos
 
@@ -115,6 +134,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T10:11:31Z
-Stopped at: Completed 05-comprehensive-testing-and-documentation/05-03-PLAN.md
-Resume file: .planning/phases/05-comprehensive-testing-and-documentation/05-03-SUMMARY.md
+Last session: 2026-03-13T10:20:21.215Z
+Stopped at: Completed 05-comprehensive-testing-and-documentation/05-02-PLAN.md
+Resume file: None
