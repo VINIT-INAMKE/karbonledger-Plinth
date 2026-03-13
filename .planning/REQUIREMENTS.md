@@ -21,10 +21,10 @@
 
 ### Medium Fixes
 
-- [ ] **MED-01**: Marketplace must verify UTxO actually contains the listed COT tokens
-- [ ] **MED-02**: Marketplace must enforce minimum price > 0
-- [ ] **MED-03**: Marketplace royalty calculation must handle rounding (minimum 1 lovelace royalty)
-- [ ] **MED-04**: DaoGovernance vote must verify all non-vote fields unchanged in output datum
+- [x] **MED-01**: Marketplace must verify UTxO actually contains the listed COT tokens
+- [x] **MED-02**: Marketplace must enforce minimum price > 0
+- [x] **MED-03**: Marketplace royalty calculation must handle rounding (minimum 1 lovelace royalty)
+- [x] **MED-04**: DaoGovernance vote must verify all non-vote fields unchanged in output datum
 
 ### Low Fixes
 
@@ -76,7 +76,7 @@
 | MED-01 | Phase 4 | Pending |
 | MED-02 | Phase 4 | Pending |
 | MED-03 | Phase 4 | Pending |
-| MED-04 | Phase 4 | Pending |
+| MED-04 | Phase 4 | Complete |
 | LOW-01 | Phase 1 | Complete |
 | LOW-02 | Phase 4 | Pending |
 | QUAL-01 | Phase 1 | Complete |

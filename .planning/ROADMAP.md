@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Code Quality Foundation** - Consolidate shared helpers, standardize error handling, set up test framework (completed 2026-03-11)
 - [x] **Phase 2: Critical Vulnerability Fixes** - Patch the 4 critical vulns: datum verification, auth bypass, config integrity, mint validation (completed 2026-03-11)
 - [ ] **Phase 3: High Vulnerability Fixes** - Fix NFT destination, trivial signer checks, governance auth gaps; add critical attack tests
-- [ ] **Phase 4: Medium and Low Fixes** - Harden marketplace validation, governance vote integrity, document disabled features
+- [x] **Phase 4: Medium and Low Fixes** - Harden marketplace validation, governance vote integrity, document disabled features (completed 2026-03-13)
 - [ ] **Phase 5: Comprehensive Testing and Documentation** - Attack tests for high/medium fixes, property-based tests, Haddock documentation
 
 ## Phase Details
@@ -79,7 +79,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- Harden Marketplace validateBuy (UTxO token verification, price floor, royalty floor) and document VaultWithdraw
+- [x] 04-01-PLAN.md -- Harden Marketplace validateBuy (UTxO token verification, price floor, royalty floor) and document VaultWithdraw
 - [ ] 04-02-PLAN.md -- Add P.Eq ProposalAction instance and DaoGovernance vote non-vote field integrity checks
 
 ### Phase 5: Comprehensive Testing and Documentation
@@ -106,6 +106,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Code Quality Foundation | 3/3 | Complete    | 2026-03-11 |
 | 2. Critical Vulnerability Fixes | 2/2 | Complete | 2026-03-11 |
-| 3. High Vulnerability Fixes | 0/2 | In progress | - |
-| 4. Medium and Low Fixes | 0/2 | Not started | - |
+| 3. High Vulnerability Fixes | 2/2 | Complete | 2026-03-12 |
+| 4. Medium and Low Fixes | 2/2 | Complete   | 2026-03-13 |
 | 5. Comprehensive Testing and Documentation | 0/0 | Not started | - |

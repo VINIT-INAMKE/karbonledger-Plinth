@@ -3,29 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-high-vulnerability-fixes/03-02-PLAN.md
-last_updated: "2026-03-12T16:04:18.011Z"
-last_activity: 2026-03-12 -- Completed 03-02 Attack scenario tests (TEST-02, HIGH attack tests)
+stopped_at: Completed 04-medium-and-low-fixes/04-02-PLAN.md
+last_updated: "2026-03-13T08:58:13Z"
+last_activity: 2026-03-13 -- Completed 04-02 Vote datum integrity enforcement (MED-04)
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
----
-
----
-gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: Completed 03-high-vulnerability-fixes/03-02-PLAN.md
-last_updated: "2026-03-12T15:52:34Z"
-last_activity: 2026-03-12 -- Completed 03-02 Attack scenario tests
-progress:
-  total_phases: 5
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 4
+  total_plans: 9
+  completed_plans: 9
 ---
 
 # Project State
@@ -35,23 +20,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-11)
 
 **Core value:** Every validator enforces complete authorization and datum integrity so no single malicious actor can manipulate platform state, mint unauthorized tokens, or steal funds
-**Current focus:** Phase 3: High Vulnerability Fixes (in progress)
+**Current focus:** Phase 4: Medium and Low Fixes -- COMPLETE
 
 ## Current Position
 
-Phase: 3 of 5 (High Vulnerability Fixes) -- COMPLETE
+Phase: 4 of 5 (Medium and Low Fixes) -- COMPLETE
 Plan: 2 of 2 in current phase (all complete)
-Status: Phase 3 complete, ready for Phase 4
-Last activity: 2026-03-12 -- Completed 03-02 Attack scenario tests (TEST-02, HIGH attack tests)
+Status: Phase 4 complete, ready for Phase 5
+Last activity: 2026-03-13 -- Completed 04-02 Vote datum integrity enforcement (MED-04)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 7min
-- Total execution time: ~51 min
+- Total plans completed: 9
+- Average duration: 6min
+- Total execution time: ~55 min
 
 **By Phase:**
 
@@ -60,10 +45,11 @@ Progress: [██████████] 100%
 | 01-code-quality-foundation | 3/3 | ~15min | ~5min |
 | 02-critical-vulnerability-fixes | 2/2 | ~14min | ~7min |
 | 03-high-vulnerability-fixes | 2/2 | ~22min | ~11min |
+| 04-medium-and-low-fixes | 2/2 | ~4min | ~2min |
 
 **Recent Trend:**
-- Last 3 plans: 02-01 (10min), 03-01 (6min), 03-02 (16min)
-- Trend: test infrastructure plans take longer (expected -- ScriptContext construction is non-trivial)
+- Last 3 plans: 03-02 (16min), 04-01 (2min), 04-02 (2min)
+- Trend: pure code/docs plans execute quickly; test infrastructure plans take longer
 
 *Updated after each plan completion*
 | Phase 01-code-quality-foundation P01 | 9min | 2 tasks | 8 files |
@@ -73,6 +59,8 @@ Progress: [██████████] 100%
 | Phase 02 P01 | 10min | 2 tasks | 2 files |
 | Phase 03 P01 | 6min | 3 tasks | 3 files |
 | Phase 03 P02 | 16min | 2 tasks | 4 files |
+| Phase 04 P01 | 2min | 2 tasks | 2 files |
+| Phase 04 P02 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -103,6 +91,10 @@ Recent decisions affecting current work:
 - [Phase 03-02]: LV.Lovelace qualified import for TxInfo fee field to disambiguate from Carbonica.Types.Core.Lovelace
 - [Phase 03-02]: Enumerated HUnit test cases over QuickCheck for explicit exploit variant naming and traceability
 - [Phase 03-02]: Positive test cases in each vulnerability group to verify patched validators still accept legitimate transactions
+- [Phase 04-01]: MKE008 precedes MKE007 in validation chain so zero-price listings fail with clear error before token check
+- [Phase 04-01]: UTxO COT check uses P.>= (not P.==) so over-funded UTxOs remain valid
+- [Phase 04-01]: Royalty floor of 1 lovelace via P.max 1 wrapping integer division
+- [Phase 04-02]: P.Eq ProposalAction instance uses explicit constructor matching (same pattern as Vote/ProposalState)
 
 ### Pending Todos
 
@@ -114,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T15:52:34Z
-Stopped at: Completed 03-high-vulnerability-fixes/03-02-PLAN.md
-Resume file: .planning/phases/03-high-vulnerability-fixes/03-02-SUMMARY.md
+Last session: 2026-03-13T08:58:13Z
+Stopped at: Completed 04-medium-and-low-fixes/04-02-PLAN.md
+Resume file: .planning/phases/04-medium-and-low-fixes/04-02-SUMMARY.md
