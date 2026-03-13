@@ -21,7 +21,6 @@ import PlutusLedgerApi.V3 (PubKeyHash (..))
 
 import Carbonica.Types.Core
     ( Lovelace (..)
-    , CetAmount (..)
     , Percentage (..)
     , CotAmount (..)
     , DeveloperAddress (..)
@@ -45,18 +44,12 @@ import Carbonica.Types.Project
     ( ProjectStatus (..)
     , mkProjectDatum
     , pdProjectName
-    , pdCotAmount
-    , pdYesVotes
-    , pdNoVotes
     )
 import Carbonica.Types.Governance
     ( ProposalAction (..)
     , ProposalState (..)
     , mkGovernanceDatum
     , gdProposalId
-    , gdYesCount
-    , gdNoCount
-    , gdAbstainCount
     )
 
 --------------------------------------------------------------------------------

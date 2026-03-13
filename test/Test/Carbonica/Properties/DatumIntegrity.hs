@@ -21,7 +21,6 @@ import Control.Exception (evaluate, try, SomeException)
 import PlutusTx (toBuiltinData)
 import PlutusLedgerApi.V3
     ( Address (..)
-    , CurrencySymbol (..)
     , Credential (..)
     , Datum (..)
     , OutputDatum (..)
@@ -42,10 +41,8 @@ import qualified Carbonica.Validators.ProjectVault as ProjectVault
 import qualified Carbonica.Validators.DaoGovernance as DaoGovernance
 
 -- Import types
-import Carbonica.Types.Core (FeeAddress (..), Lovelace (..))
 import Carbonica.Types.Config
-    ( ConfigDatum, Multisig (..)
-    , identificationTokenName, mkConfigDatum
+    ( identificationTokenName
     )
 import Carbonica.Types.Project
     ( ProjectDatum, ProjectStatus (..)
@@ -215,16 +212,6 @@ baseInputGov = mkTestGovernanceDatum
   , VoteRecord charlie VoterPending
   ]
   0 0 0 (oneWeekMs P.+ 1_000_000) ProposalInProgress
-
--- | Valid output governance datum (alice votes yes, count incremented).
-baseOutputGov :: GovernanceDatum
-baseOutputGov = mkTestGovernanceDatum
-  "test_proposal_001" alice (ActionUpdateFeeAmount 200_000_000)
-  [ VoteRecord alice (VoterVoted VoteYes)
-  , VoteRecord bob VoterPending
-  , VoteRecord charlie VoterPending
-  ]
-  1 0 0 (oneWeekMs P.+ 1_000_000) ProposalInProgress
 
 -- | Property: mutating gdSubmittedBy causes rejection.
 prop_dgVoteRejectsMutatedSubmitter :: ArbPubKeyHash -> Property

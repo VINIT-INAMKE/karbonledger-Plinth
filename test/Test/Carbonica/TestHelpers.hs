@@ -118,7 +118,6 @@ import Carbonica.Types.Governance
 import Carbonica.Validators.Marketplace
     ( MarketplaceDatum (..)
     , MarketplaceRedeemer (..)
-    , Wallet (..)
     )
 
 --------------------------------------------------------------------------------
