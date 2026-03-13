@@ -112,6 +112,7 @@ test-suite carbonica-tests
     Test.Carbonica.Validators
     Test.Carbonica.Common
     Test.Carbonica.Properties.SmartConstructors
+    Test.Carbonica.Properties.DatumIntegrity
     Test.Carbonica.TestHelpers
     Test.Carbonica.AttackScenarios
   build-depends:
