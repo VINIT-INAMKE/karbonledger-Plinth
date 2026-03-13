@@ -40,6 +40,10 @@ module Test.Carbonica.TestHelpers
     -- * Value Helpers
   , lovelaceSingleton
 
+    -- * Arbitrary Instances
+  , ArbPubKeyHash(..)
+  , ArbPOSIXTime(..)
+
     -- * Test Constants
   , alice, bob, charlie, dave, eve
   , testIdNftPolicy, testProjectPolicy, testProposalPolicy
@@ -51,8 +55,10 @@ module Test.Carbonica.TestHelpers
 
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase, assertFailure)
+import Test.QuickCheck (Arbitrary(..), Gen, Positive(..), elements, vectorOf)
 
 import Control.Exception (evaluate, try, SomeException)
+import Data.String (fromString)
 
 import PlutusLedgerApi.V3
     ( Address (..)
@@ -113,6 +119,22 @@ import Carbonica.Validators.Marketplace
     , MarketplaceRedeemer (..)
     , Wallet (..)
     )
+
+--------------------------------------------------------------------------------
+-- ARBITRARY INSTANCES (for QuickCheck property tests)
+--------------------------------------------------------------------------------
+
+-- | Newtype wrapper to avoid orphan Arbitrary PubKeyHash instance
+newtype ArbPubKeyHash = ArbPubKeyHash { unArbPkh :: PubKeyHash }
+
+instance Arbitrary ArbPubKeyHash where
+  arbitrary = ArbPubKeyHash . PubKeyHash . fromString <$> vectorOf 28 (elements ['a'..'f'])
+
+-- | Newtype wrapper for POSIXTime generation
+newtype ArbPOSIXTime = ArbPOSIXTime { unArbTime :: POSIXTime }
+
+instance Arbitrary ArbPOSIXTime where
+  arbitrary = ArbPOSIXTime . fromIntegral . getPositive <$> (arbitrary :: Gen (Positive Integer))
 
 --------------------------------------------------------------------------------
 -- TEST CONSTANTS
