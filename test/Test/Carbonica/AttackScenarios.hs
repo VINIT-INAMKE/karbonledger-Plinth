@@ -41,6 +41,7 @@ import qualified Carbonica.Validators.ProjectVault as ProjectVault
 import qualified Carbonica.Validators.DaoGovernance as DaoGovernance
 import qualified Carbonica.Validators.ProjectPolicy as ProjectPolicy
 import qualified Carbonica.Validators.CotPolicy as CotPolicy
+import qualified Carbonica.Validators.Marketplace as Marketplace
 
 -- Import types needed for building test data
 import Carbonica.Types.Core (FeeAddress (..), Lovelace (..))
@@ -64,6 +65,11 @@ import Carbonica.Types.Governance
     , DaoMintRedeemer (..)
     )
 import Carbonica.Validators.CotPolicy (CotRedeemer (..))
+import Carbonica.Validators.Marketplace
+    ( MarketplaceDatum (..)
+    , MarketplaceRedeemer (..)
+    , Wallet (..)
+    )
 
 -- Import test helpers
 import Test.Carbonica.TestHelpers
@@ -82,6 +88,10 @@ attackScenarioTests = testGroup "Attack Scenario Tests"
   , high02Tests   -- ProjectVault/DaoGovernance trivial signer bypass
   , high03Tests   -- DaoGovernance execute/reject without multisig
   , high04Tests   -- DaoGovernance vote impersonation
+  , med01Tests    -- Marketplace UTxO token verification
+  , med02Tests    -- Marketplace zero/negative price
+  , med03Tests    -- Marketplace royalty rounding evasion
+  , med04Tests    -- DaoGovernance vote non-vote field mutation
   ]
 
 --------------------------------------------------------------------------------
@@ -887,6 +897,410 @@ high04_positive_voterSignsOwn =
   let ctx = mkDaoVoteCtx [alice] alice VoteYes
   in testAttackAccepted2
        "HIGH-04-positive: voter signs own transaction"
+       DaoGovernance.untypedSpendValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData ctx)
+
+--------------------------------------------------------------------------------
+-- MED-01: Marketplace UTxO token verification
+-- The patched validateBuy verifies the spent UTxO contains the claimed COT
+-- tokens (MKE007). Previously, a listing could claim COT tokens that the
+-- UTxO did not actually hold.
+--------------------------------------------------------------------------------
+
+med01Tests :: TestTree
+med01Tests = testGroup "MED-01: Marketplace UTxO token verification"
+  [ med01a_buyWithEmptyUtxo
+  , med01b_buyWithWrongToken
+  , med01_positive_buyWithCorrectCot
+  , med01_withdraw_regression
+  ]
+
+-- Shared Marketplace datum for MED-01/02/03 tests
+-- Claims 100 COT tokens at a price of 100 ADA
+testCotPolicy :: CurrencySymbol
+testCotPolicy = CurrencySymbol "test_cot_policy_0000000000000000"
+
+testCotToken :: TokenName
+testCotToken = TokenName "Test_COT_Token"
+
+testMktDatum :: MarketplaceDatum
+testMktDatum = MarketplaceDatum
+  { mdOwner    = Wallet alice P.Nothing
+  , mdAmount   = 100_000_000  -- 100 ADA
+  , mdCotPolicy = testCotPolicy
+  , mdCotToken  = testCotToken
+  , mdCotQty    = 100
+  }
+
+-- | MED-01a: Buy with empty UTxO (only ADA, no COT tokens)
+-- UTxO claims 100 COT but actually holds only ADA. Expected rejection MKE007.
+med01a_buyWithEmptyUtxo :: TestTree
+med01a_buyWithEmptyUtxo =
+  let -- UTxO only has ADA, no COT tokens
+      utxoVal = lovelaceSingleton 2_000_000
+      -- Correct payouts (seller + royalty + buyer)
+      sellerPayout = mkPkhTxOut alice (lovelaceSingleton 95_000_000)
+      royaltyPayout = mkPkhTxOut testRoyaltyAddr (lovelaceSingleton 5_000_000)
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] testMktDatum MktBuy utxoVal
+              [sellerPayout, royaltyPayout, buyerPayout]
+  in testAttackRejected3
+       "MED-01a: buy with empty UTxO (MKE007)"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-01b: Buy with wrong token in UTxO
+-- UTxO holds COT from a different policy. Expected rejection MKE007.
+med01b_buyWithWrongToken :: TestTree
+med01b_buyWithWrongToken =
+  let wrongPolicy = CurrencySymbol "wrong_cot_policy_000000000000"
+      utxoVal = lovelaceSingleton 2_000_000
+             <> singleton wrongPolicy testCotToken 100
+      sellerPayout = mkPkhTxOut alice (lovelaceSingleton 95_000_000)
+      royaltyPayout = mkPkhTxOut testRoyaltyAddr (lovelaceSingleton 5_000_000)
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] testMktDatum MktBuy utxoVal
+              [sellerPayout, royaltyPayout, buyerPayout]
+  in testAttackRejected3
+       "MED-01b: buy with wrong token in UTxO (MKE007)"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-01 positive: Buy with correct COT tokens in UTxO
+-- UTxO holds the correct COT tokens, all payouts correct.
+med01_positive_buyWithCorrectCot :: TestTree
+med01_positive_buyWithCorrectCot =
+  let utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      sellerPayout = mkPkhTxOut alice (lovelaceSingleton 95_000_000)
+      royaltyPayout = mkPkhTxOut testRoyaltyAddr (lovelaceSingleton 5_000_000)
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] testMktDatum MktBuy utxoVal
+              [sellerPayout, royaltyPayout, buyerPayout]
+  in testAttackAccepted3
+       "MED-01-positive: buy with correct COT tokens accepted"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-01 Withdraw regression: Owner withdrawal with empty UTxO
+-- The UTxO claims 100 COT but holds only ADA -- this is irrelevant for Withdraw
+-- because Withdraw only checks MKE006 (owner signature). This verifies Buy-path
+-- MKE007 hardening does NOT break the Withdraw path.
+med01_withdraw_regression :: TestTree
+med01_withdraw_regression =
+  let utxoVal = lovelaceSingleton 2_000_000  -- No COT tokens
+      ctx = mkMarketplaceCtx [alice] testMktDatum MktWithdraw utxoVal []
+  in testAttackAccepted3
+       "MED-01-withdraw: owner withdrawal with empty UTxO accepted"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+--------------------------------------------------------------------------------
+-- MED-02: Marketplace zero/negative price
+-- The patched validateBuy enforces mdAmount > 0 (MKE008).
+-- Previously, zero or negative prices allowed trades with no payment.
+--------------------------------------------------------------------------------
+
+med02Tests :: TestTree
+med02Tests = testGroup "MED-02: Marketplace zero/negative price"
+  [ med02a_zeroPriceBuy
+  , med02b_negativePriceBuy
+  , med02_positive_positivePriceBuy
+  , med02_withdraw_regression
+  ]
+
+-- | MED-02a: Buy with zero price
+-- Datum has mdAmount = 0. Expected rejection MKE008.
+med02a_zeroPriceBuy :: TestTree
+med02a_zeroPriceBuy =
+  let zeroPriceDatum = testMktDatum { mdAmount = 0 }
+      utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] zeroPriceDatum MktBuy utxoVal [buyerPayout]
+  in testAttackRejected3
+       "MED-02a: zero price buy (MKE008)"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-02b: Buy with negative price
+-- Datum has mdAmount = -1. Expected rejection MKE008.
+med02b_negativePriceBuy :: TestTree
+med02b_negativePriceBuy =
+  let negPriceDatum = testMktDatum { mdAmount = -1 }
+      utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] negPriceDatum MktBuy utxoVal [buyerPayout]
+  in testAttackRejected3
+       "MED-02b: negative price buy (MKE008)"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-02 positive: Buy with valid positive price
+med02_positive_positivePriceBuy :: TestTree
+med02_positive_positivePriceBuy =
+  let utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      sellerPayout = mkPkhTxOut alice (lovelaceSingleton 95_000_000)
+      royaltyPayout = mkPkhTxOut testRoyaltyAddr (lovelaceSingleton 5_000_000)
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] testMktDatum MktBuy utxoVal
+              [sellerPayout, royaltyPayout, buyerPayout]
+  in testAttackAccepted3
+       "MED-02-positive: positive price buy accepted"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-02 Withdraw regression: Owner withdrawal with zero-price datum
+-- Verifies Buy-path MKE008 hardening does NOT block owner withdrawals of
+-- zero-priced listings. Withdraw only validates MKE006 (owner signed).
+med02_withdraw_regression :: TestTree
+med02_withdraw_regression =
+  let zeroPriceDatum = testMktDatum { mdAmount = 0 }
+      utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      ctx = mkMarketplaceCtx [alice] zeroPriceDatum MktWithdraw utxoVal []
+  in testAttackAccepted3
+       "MED-02-withdraw: owner withdrawal of zero-price listing accepted"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+--------------------------------------------------------------------------------
+-- MED-03: Marketplace royalty rounding evasion
+-- The patched validateBuy enforces a royalty floor of 1 lovelace (MKE004).
+-- P.max 1 ((price * 5) `div` 100) ensures at least 1 lovelace royalty.
+--------------------------------------------------------------------------------
+
+med03Tests :: TestTree
+med03Tests = testGroup "MED-03: Marketplace royalty rounding evasion"
+  [ med03a_royaltyRoundingFloor
+  , med03_positive_royaltyFloorPaid
+  , med03_withdraw_regression
+  ]
+
+-- | MED-03a: Price = 1 lovelace, attacker omits platform payment entirely
+-- royalty = P.max 1 ((1 * 5) `div` 100) = P.max 1 0 = 1 lovelace minimum
+-- With no output to royaltyAddr, MKE004 (platform not paid) should fire.
+med03a_royaltyRoundingFloor :: TestTree
+med03a_royaltyRoundingFloor =
+  let lowPriceDatum = testMktDatum { mdAmount = 1 }
+      utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      -- payout = 1 - 1 = 0, so seller gets nothing (or nearly nothing)
+      -- Attacker omits royalty output entirely
+      sellerPayout = mkPkhTxOut alice (lovelaceSingleton 0)
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] lowPriceDatum MktBuy utxoVal
+              [sellerPayout, buyerPayout]
+  in testAttackRejected3
+       "MED-03a: royalty rounding evasion (MKE004)"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-03 positive: Price = 1, royalty floor (1 lovelace) paid
+-- The minimum royalty of 1 lovelace is paid to the platform.
+med03_positive_royaltyFloorPaid :: TestTree
+med03_positive_royaltyFloorPaid =
+  let lowPriceDatum = testMktDatum { mdAmount = 1 }
+      utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      -- royalty = max 1 ((1*5)/100) = max 1 0 = 1, payout = 1 - 1 = 0
+      sellerPayout = mkPkhTxOut alice (lovelaceSingleton 0)
+      royaltyPayout = mkPkhTxOut testRoyaltyAddr (lovelaceSingleton 1)
+      buyerPayout = TxOut
+        (Address (PubKeyCredential bob) Nothing)
+        (singleton testCotPolicy testCotToken 100)
+        NoOutputDatum
+        Nothing
+      ctx = mkMarketplaceCtx [bob] lowPriceDatum MktBuy utxoVal
+              [sellerPayout, royaltyPayout, buyerPayout]
+  in testAttackAccepted3
+       "MED-03-positive: royalty floor paid accepted"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+-- | MED-03 Withdraw regression: Owner withdrawal with 1-lovelace-price datum
+-- No royalty output at all. Owner signs. Verifies that Buy-path MKE004 royalty
+-- enforcement does NOT affect Withdraw path (Withdraw only checks MKE006).
+med03_withdraw_regression :: TestTree
+med03_withdraw_regression =
+  let lowPriceDatum = testMktDatum { mdAmount = 1 }
+      utxoVal = lovelaceSingleton 2_000_000
+             <> singleton testCotPolicy testCotToken 100
+      ctx = mkMarketplaceCtx [alice] lowPriceDatum MktWithdraw utxoVal []
+  in testAttackAccepted3
+       "MED-03-withdraw: owner withdrawal without royalty accepted"
+       Marketplace.untypedValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData testRoyaltyAddr)
+       (toBuiltinData ctx)
+
+--------------------------------------------------------------------------------
+-- MED-04: DaoGovernance vote non-vote field mutation
+-- The patched validateVote checks DGE019 (submitter unchanged),
+-- DGE020 (action unchanged), and DGE021 (deadline unchanged).
+--------------------------------------------------------------------------------
+
+med04Tests :: TestTree
+med04Tests = testGroup "MED-04: DaoGovernance vote non-vote field mutation"
+  [ med04a_submitterMutated
+  , med04b_actionMutated
+  , med04c_deadlineMutated
+  , med04_positive_validVotePreservesFields
+  ]
+
+-- | Local helper: Build DaoGovernance vote spending context with given input/output datums
+mkDaoVoteSpendCtx
+  :: [PubKeyHash]     -- signers
+  -> GovernanceDatum  -- input datum
+  -> GovernanceDatum  -- output datum
+  -> Vote             -- vote direction
+  -> ScriptContext
+mkDaoVoteSpendCtx signers inputGov outputGov vote =
+  let govOref = TxOutRef (TxId "gov_utxo_id_000000000000000000") 0
+      inputDatumData = Datum (toBuiltinData inputGov)
+      govInput = mkTxInInfo govOref
+        (mkScriptTxOut "governance_script_hash_00000000"
+          (singleton testProposalPolicy (TokenName "test_proposal_001") 1)
+          inputDatumData)
+      govOutput = mkScriptTxOut "governance_script_hash_00000000"
+        (singleton testProposalPolicy (TokenName "test_proposal_001") 1)
+        (Datum (toBuiltinData outputGov))
+      configRef = mkRefInputWithConfig testIdNftPolicy defaultConfig
+      txInfo' = mkTxInfo signers [govInput] [govOutput] [configRef] emptyValue
+  in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote vote))) govOref inputDatumData
+
+-- | Base input governance datum for MED-04 tests
+med04InputGov :: GovernanceDatum
+med04InputGov = mkTestGovernanceDatum
+  "test_proposal_001" alice (ActionUpdateFeeAmount 200_000_000)
+  [ VoteRecord alice VoterPending
+  , VoteRecord bob VoterPending
+  , VoteRecord charlie VoterPending
+  ]
+  0 0 0 (oneWeekMs P.+ 1000000) ProposalInProgress
+
+-- | MED-04a: Submitter mutated during vote
+-- Input gdSubmittedBy = alice, output gdSubmittedBy = eve. Expected rejection DGE019.
+med04a_submitterMutated :: TestTree
+med04a_submitterMutated =
+  let -- Correct vote output (alice votes yes) but with mutated submitter
+      badOutputGov = mkTestGovernanceDatum
+        "test_proposal_001" eve (ActionUpdateFeeAmount 200_000_000)
+        [ VoteRecord alice (VoterVoted VoteYes)
+        , VoteRecord bob VoterPending
+        , VoteRecord charlie VoterPending
+        ]
+        1 0 0 (oneWeekMs P.+ 1000000) ProposalInProgress
+      ctx = mkDaoVoteSpendCtx [alice] med04InputGov badOutputGov VoteYes
+  in testAttackRejected2
+       "MED-04a: submitter mutated during vote (DGE019)"
+       DaoGovernance.untypedSpendValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData ctx)
+
+-- | MED-04b: Action mutated during vote
+-- Input gdAction = ActionUpdateFeeAmount 200M, output gdAction = ActionAddSigner dave.
+-- Expected rejection DGE020.
+med04b_actionMutated :: TestTree
+med04b_actionMutated =
+  let badOutputGov = mkTestGovernanceDatum
+        "test_proposal_001" alice (ActionAddSigner dave)
+        [ VoteRecord alice (VoterVoted VoteYes)
+        , VoteRecord bob VoterPending
+        , VoteRecord charlie VoterPending
+        ]
+        1 0 0 (oneWeekMs P.+ 1000000) ProposalInProgress
+      ctx = mkDaoVoteSpendCtx [alice] med04InputGov badOutputGov VoteYes
+  in testAttackRejected2
+       "MED-04b: action mutated during vote (DGE020)"
+       DaoGovernance.untypedSpendValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData ctx)
+
+-- | MED-04c: Deadline mutated during vote
+-- Input gdDeadline = oneWeekMs + 1M, output gdDeadline = oneWeekMs + 9M.
+-- Expected rejection DGE021.
+med04c_deadlineMutated :: TestTree
+med04c_deadlineMutated =
+  let badOutputGov = mkTestGovernanceDatum
+        "test_proposal_001" alice (ActionUpdateFeeAmount 200_000_000)
+        [ VoteRecord alice (VoterVoted VoteYes)
+        , VoteRecord bob VoterPending
+        , VoteRecord charlie VoterPending
+        ]
+        1 0 0 (oneWeekMs P.+ 9000000) ProposalInProgress
+      ctx = mkDaoVoteSpendCtx [alice] med04InputGov badOutputGov VoteYes
+  in testAttackRejected2
+       "MED-04c: deadline mutated during vote (DGE021)"
+       DaoGovernance.untypedSpendValidator
+       (toBuiltinData testIdNftPolicy)
+       (toBuiltinData ctx)
+
+-- | MED-04 positive: Valid vote preserves all non-vote fields
+-- All non-vote fields preserved, vote count incremented correctly.
+med04_positive_validVotePreservesFields :: TestTree
+med04_positive_validVotePreservesFields =
+  let goodOutputGov = mkTestGovernanceDatum
+        "test_proposal_001" alice (ActionUpdateFeeAmount 200_000_000)
+        [ VoteRecord alice (VoterVoted VoteYes)
+        , VoteRecord bob VoterPending
+        , VoteRecord charlie VoterPending
+        ]
+        1 0 0 (oneWeekMs P.+ 1000000) ProposalInProgress
+      ctx = mkDaoVoteSpendCtx [alice] med04InputGov goodOutputGov VoteYes
+  in testAttackAccepted2
+       "MED-04-positive: valid vote preserves all fields"
        DaoGovernance.untypedSpendValidator
        (toBuiltinData testIdNftPolicy)
        (toBuiltinData ctx)

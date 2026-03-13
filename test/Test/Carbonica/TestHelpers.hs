@@ -29,6 +29,7 @@ module Test.Carbonica.TestHelpers
   , mkTxInfoWithRange
   , mkMintingCtx
   , mkSpendingCtx
+  , mkMarketplaceCtx
 
     -- * Attack Test Wrappers
   , testAttackRejected2
@@ -36,11 +37,15 @@ module Test.Carbonica.TestHelpers
   , testAttackAccepted2
   , testAttackAccepted3
 
+    -- * Value Helpers
+  , lovelaceSingleton
+
     -- * Test Constants
   , alice, bob, charlie, dave, eve
   , testIdNftPolicy, testProjectPolicy, testProposalPolicy
   , testVaultHash, testAltHash
   , testIdTokenName
+  , testRoyaltyAddr
   , oneWeekMs
   ) where
 
@@ -103,6 +108,11 @@ import Carbonica.Types.Governance
     , VoteRecord (..)
     , mkGovernanceDatum
     )
+import Carbonica.Validators.Marketplace
+    ( MarketplaceDatum (..)
+    , MarketplaceRedeemer (..)
+    , Wallet (..)
+    )
 
 --------------------------------------------------------------------------------
 -- TEST CONSTANTS
@@ -126,6 +136,17 @@ testAltHash   = "test_alt_hash_00000000000000000"
 
 testIdTokenName :: TokenName
 testIdTokenName = TokenName identificationTokenName
+
+testRoyaltyAddr :: PubKeyHash
+testRoyaltyAddr = PubKeyHash "royalty_pkh_bytes_0000000000"
+
+--------------------------------------------------------------------------------
+-- VALUE HELPERS
+--------------------------------------------------------------------------------
+
+-- | Build a Value containing only ADA (lovelace).
+lovelaceSingleton :: Integer -> Value
+lovelaceSingleton n = singleton (CurrencySymbol "") (TokenName "") n
 
 --------------------------------------------------------------------------------
 -- DATUM BUILDERS
@@ -269,6 +290,29 @@ mkMintingCtx txInfo red policy = ScriptContext txInfo red (MintingScript policy)
 -- | Build a ScriptContext for a spending script.
 mkSpendingCtx :: TxInfo -> Redeemer -> TxOutRef -> Datum -> ScriptContext
 mkSpendingCtx txInfo red oref datum = ScriptContext txInfo red (SpendingScript oref (Just datum))
+
+-- | Build a Marketplace spending ScriptContext.
+--
+-- Creates a context with:
+--   - A marketplace script input holding the given UTxO value with the datum
+--   - The given outputs and signers
+--   - Uses mkTxInfo (always valid range)
+--   - Wraps in mkSpendingCtx with the given redeemer
+mkMarketplaceCtx
+  :: [PubKeyHash]          -- ^ Transaction signatories
+  -> MarketplaceDatum      -- ^ Marketplace datum on the input UTxO
+  -> MarketplaceRedeemer   -- ^ MktBuy or MktWithdraw
+  -> Value                 -- ^ Value held in the marketplace UTxO
+  -> [TxOut]               -- ^ Transaction outputs
+  -> ScriptContext
+mkMarketplaceCtx signers mktDatum red utxoVal outs =
+  let oref = TxOutRef (TxId "mkt_utxo_id_0000000000000000000") 0
+      datumData = Datum (PlutusTx.toBuiltinData mktDatum)
+      mktScriptHash = "marketplace_script_hash_00000000"
+      mktInput = mkTxInInfo oref
+        (mkScriptTxOut mktScriptHash utxoVal datumData)
+      txInfo' = mkTxInfo signers [mktInput] outs [] mempty
+  in mkSpendingCtx txInfo' (Redeemer (PlutusTx.toBuiltinData red)) oref datumData
 
 --------------------------------------------------------------------------------
 -- ATTACK TEST WRAPPERS
