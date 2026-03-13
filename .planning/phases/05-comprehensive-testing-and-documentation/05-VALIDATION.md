@@ -1,10 +1,11 @@
 ---
 phase: 5
 slug: comprehensive-testing-and-documentation
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-13
+validated: 2026-03-13
 ---
 
 # Phase 5 — Validation Strategy
@@ -38,35 +39,35 @@ created: 2026-03-13
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 05-01-01 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-01-02 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-01-03 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-01-04 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-02-01 | 02 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-02-02 | 02 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-02-03 | 02 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-02-04 | 02 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-02-05 | 02 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-02-06 | 02 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-03-01 | 03 | 1 | TEST-05 | QuickCheck property | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-03-02 | 03 | 1 | TEST-05 | QuickCheck property | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-03-03 | 03 | 1 | TEST-05 | QuickCheck property | `cabal test carbonica-tests` | ❌ W0 | ⬜ pending |
-| 05-04-01 | 04 | 2 | QUAL-03 | Manual review | N/A | ❌ W0 | ⬜ pending |
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | Test File | Status |
+|---------|------|------|-------------|-----------|-------------------|-----------|--------|
+| 05-01-01 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | AttackScenarios.hs: med01Tests (4 cases) | green |
+| 05-01-02 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | AttackScenarios.hs: med02Tests (4 cases) | green |
+| 05-01-03 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | AttackScenarios.hs: med03Tests (3 cases) | green |
+| 05-01-04 | 01 | 1 | TEST-03 | HUnit attack | `cabal test carbonica-tests` | AttackScenarios.hs: med04Tests (4 cases) | green |
+| 05-02-01 | 01 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | SmartConstructors.hs: cetAmountProperties | green |
+| 05-02-02 | 01 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | SmartConstructors.hs: percentageProperties | green |
+| 05-02-03 | 01 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | SmartConstructors.hs: multisigProperties | green |
+| 05-02-04 | 01 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | SmartConstructors.hs: configDatumProperties | green |
+| 05-02-05 | 01 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | SmartConstructors.hs: projectDatumProperties | green |
+| 05-02-06 | 01 | 1 | TEST-04 | QuickCheck | `cabal test carbonica-tests` | SmartConstructors.hs: governanceDatumProperties | green |
+| 05-03-01 | 02 | 2 | TEST-05 | QuickCheck property | `cabal test carbonica-tests` | DatumIntegrity.hs: projectVaultVoteIntegrity (2 props) | green |
+| 05-03-02 | 02 | 2 | TEST-05 | QuickCheck property | `cabal test carbonica-tests` | DatumIntegrity.hs: daoGovernanceVoteIntegrity (3 props) | green |
+| 05-03-03 | 02 | 2 | TEST-05 | QuickCheck property | `cabal test carbonica-tests` | DatumIntegrity.hs: configUpdateIntegrity (1 prop) | green |
+| 05-04-01 | 03 | 1 | QUAL-03 | Manual review | `cabal haddock` | 13 source files with Haddock | green |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `test/Test/Carbonica/Properties/DatumIntegrity.hs` — new module for TEST-05
-- [ ] Arbitrary instances in `test/Test/Carbonica/TestHelpers.hs` — needed by DatumIntegrity.hs
-- [ ] `smartcontracts.cabal` other-modules entry for `Test.Carbonica.Properties.DatumIntegrity`
-- [ ] `test/Main.hs` updated import + wiring for `datumIntegrityTests`
+- [x] `test/Test/Carbonica/Properties/DatumIntegrity.hs` — 355 lines, 6 properties across 3 invariant groups
+- [x] Arbitrary instances in `test/Test/Carbonica/TestHelpers.hs` — ArbPubKeyHash, ArbPOSIXTime exported
+- [x] `smartcontracts.cabal` other-modules entry for `Test.Carbonica.Properties.DatumIntegrity` (line 115)
+- [x] `test/Main.hs` updated import + wiring for `datumIntegrityTests` (lines 13, 22)
 
-*Existing files `AttackScenarios.hs` and `Properties/SmartConstructors.hs` need extension, not creation.*
+*All Wave 0 requirements delivered across Plans 01-02 (commits 1160f55, 37493ae, e440212, fbb361b).*
 
 ---
 
@@ -80,11 +81,27 @@ created: 2026-03-13
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved
+
+## Validation Audit 2026-03-13
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 4 requirements (TEST-03, TEST-04, TEST-05, QUAL-03) have automated or manual verification coverage:
+- TEST-03: 15 MED attack tests (med01-04Tests) including 3 Withdraw regression tests
+- TEST-04: 38 QuickCheck properties across 8 smart constructor groups
+- TEST-05: 6 datum integrity properties across 3 invariant groups (ProjectVault vote, DaoGovernance vote, ConfigUpdate)
+- QUAL-03: Haddock on all exported functions across 13 source files (manual-only)
+
+Verification report (05-VERIFICATION.md) confirms 4/4 truths verified.
