@@ -174,27 +174,16 @@ import           Carbonica.Validators.Common    (anySignerInList,
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | Project Vault spending validator (OPTIMIZED - Phase 2)
+-- | Project Vault spending validator.
 --
 --   Parameters:
---     idNftPolicy - Identification NFT policy (to find config)
+--     idNftPolicy   - Identification NFT policy (to find config)
 --     projectPolicy - Project NFT policy (to verify burning)
 --
---   Phase 2 Optimizations:
---     - Error codes (PVE000-PVE012) for minimal on-chain footprint
---     - Hoisted common extractions (outputs, signatories, mintedValue extracted once)
---     - INLINE pragmas for constants and frequently used values
---
---   Spending Rules:
---     Action 0 (Accept):
---       - Developer receives COT at their address
---       - Project NFT burned
---       - Multisig verification
---
---     Action 1 (Reject):
---       - Project NFT burned
---       - Multisig verification
+--   VaultVote:    voter signs, is in multisig, has not voted, project Submitted.
+--   VaultApprove: quorum met, project NFT burned, developer gets COT, multisig.
+--   VaultReject:  quorum met, project NFT burned, multisig.
+{-# INLINEABLE typedValidator #-}
 typedValidator :: CurrencySymbol -> CurrencySymbol -> ScriptContext -> Bool
 typedValidator idNftPolicy projectPolicy ctx =
   let ScriptContext txInfo rawRedeemer scriptInfo = ctx
@@ -406,6 +395,9 @@ typedValidator idNftPolicy projectPolicy ctx =
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the Project Vault spending validator.
+--
+-- First arg: idNftPolicy. Second arg: projectPolicy. Third arg: ScriptContext.
 {-# INLINEABLE untypedValidator #-}
 untypedValidator :: BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator idNftPolicyData projectPolicyData ctxData =
@@ -416,5 +408,6 @@ untypedValidator idNftPolicyData projectPolicyData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
+-- | Compiled UPLC code for on-chain deployment of the Project Vault validator.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])

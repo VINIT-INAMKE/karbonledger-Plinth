@@ -218,7 +218,10 @@ extractDatum txOut = case txOutDatum txOut of
   OutputDatum (Datum d) -> PlutusTx.fromBuiltinData d
   _ -> P.Nothing
 
--- | Find ConfigDatum in reference inputs by looking for NFT
+-- | Find a typed datum in reference inputs by looking for a specific NFT.
+--
+-- Searches reference inputs for one holding the given policy/token name,
+-- then extracts and deserializes its inline datum.
 {-# INLINEABLE findConfigDatum #-}
 findConfigDatum :: PlutusTx.FromData a => [TxInInfo] -> CurrencySymbol -> TokenName -> P.Maybe a
 findConfigDatum [] _ _ = P.Nothing
@@ -230,7 +233,10 @@ findConfigDatum (i:is) policy tkn =
          P.Nothing    -> findConfigDatum is policy tkn
        else findConfigDatum is policy tkn
 
--- | Find datum in outputs by looking for NFT (used when config is being updated)
+-- | Find a typed datum in transaction outputs by looking for a specific NFT.
+--
+-- Used when configuration is being updated (e.g., during DAO proposal execution)
+-- to locate the new ConfigDatum in outputs.
 {-# INLINEABLE findDatumInOutputs #-}
 findDatumInOutputs :: PlutusTx.FromData a => [TxOut] -> CurrencySymbol -> TokenName -> P.Maybe a
 findDatumInOutputs [] _ _ = P.Nothing
@@ -282,7 +288,10 @@ validateMultisig :: [PubKeyHash] -> [PubKeyHash] -> Integer -> Bool
 validateMultisig signatories authorized required =
   countMatching signatories authorized P.>= required
 
--- | Count how many items from list1 appear in list2
+-- | Count how many items from the first list appear in the second list.
+--
+-- Used by 'validateMultisig' to count matching signatories against
+-- the authorized signer list.
 {-# INLINEABLE countMatching #-}
 countMatching :: P.Eq a => [a] -> [a] -> Integer
 countMatching signatories authorized = go signatories
@@ -293,7 +302,7 @@ countMatching signatories authorized = go signatories
         then 1 P.+ go xs
         else go xs
 
--- | Check if item is in list
+-- | Check if an item is present in a list (linear search).
 {-# INLINEABLE isInList #-}
 isInList :: P.Eq a => a -> [a] -> Bool
 isInList _ [] = False
@@ -311,14 +320,19 @@ anySignerInList (s:ss) list = isInList s list P.|| anySignerInList ss list
 -- VALUE HELPERS (token counting and validation)
 --------------------------------------------------------------------------------
 
--- | Check if any output contains the specified token
+-- | Check if any transaction output contains the specified token.
+--
+-- Returns 'True' if at least one output holds a positive quantity of
+-- the given policy and token name.
 {-# INLINEABLE hasTokenInOutputs #-}
 hasTokenInOutputs :: [TxOut] -> CurrencySymbol -> TokenName -> Bool
 hasTokenInOutputs [] _ _ = False
 hasTokenInOutputs (o:os) policy tkn =
   valueOf (txOutValue o) policy tkn P.> 0 P.|| hasTokenInOutputs os policy tkn
 
--- | Sum all token quantities for a given policy (across all token names)
+-- | Sum all token quantities for a given policy across all token names.
+--
+-- Operates on a flattened value list @[(CurrencySymbol, TokenName, Integer)]@.
 {-# INLINEABLE sumTokensByPolicy #-}
 sumTokensByPolicy :: [(CurrencySymbol, TokenName, Integer)] -> CurrencySymbol -> Integer
 sumTokensByPolicy [] _ = 0
@@ -327,8 +341,10 @@ sumTokensByPolicy ((cs, _, qty):xs) policy =
     then qty P.+ sumTokensByPolicy xs policy
     else sumTokensByPolicy xs policy
 
--- | Count how many distinct tokens exist for a policy with a specific name
---   Returns the count (should be 1 for NFTs)
+-- | Count how many distinct tokens exist for a policy with a specific name.
+--
+-- Returns the count (should be 1 for NFTs). Fails fast if the policy
+-- has a token with quantity other than 1.
 {-# INLINEABLE countTokensWithName #-}
 countTokensWithName :: [(CurrencySymbol, TokenName, Integer)] -> CurrencySymbol -> TokenName -> Integer
 countTokensWithName tokens policy tkn = go tokens 0
@@ -342,13 +358,18 @@ countTokensWithName tokens policy tkn = go tokens 0
           then 0  -- Found policy but wrong quantity, fail fast
           else go xs acc
 
--- | Check if exactly 1 token with the given name exists (for NFTs)
+-- | Check if exactly 1 token with the given name exists under the policy.
+--
+-- Used to verify NFT uniqueness (quantity must be exactly 1).
 {-# INLINEABLE hasSingleTokenWithName #-}
 hasSingleTokenWithName :: [(CurrencySymbol, TokenName, Integer)] -> CurrencySymbol -> TokenName -> Bool
 hasSingleTokenWithName tokens policy tkn =
   countTokensWithName tokens policy tkn P.== 1
 
--- | Get minted amount for a specific token (policy + name) - for fungible tokens
+-- | Get the minted amount for a specific token (policy + name).
+--
+-- Returns 0 if the token is not present. Suitable for fungible tokens
+-- where only a single token name per policy is expected.
 {-# INLINEABLE getMintedAmountForToken #-}
 getMintedAmountForToken :: [(CurrencySymbol, TokenName, Integer)] -> CurrencySymbol -> TokenName -> Integer
 getMintedAmountForToken [] _ _ = 0
@@ -440,25 +461,30 @@ mustBurnLessThan0 val policy =
   let tokens = getTokensForPolicy val policy
   in allNegative tokens
 
--- | Get all tokens for a specific policy from a Value
+-- | Get all tokens for a specific policy from a 'Value'.
+--
+-- Returns a list of @(TokenName, Integer)@ pairs for every token name
+-- under the given 'CurrencySymbol'.
 {-# INLINEABLE getTokensForPolicy #-}
 getTokensForPolicy :: Value -> CurrencySymbol -> [(TokenName, Integer)]
 getTokensForPolicy val policy =
   [(tkn, qty) | (cs, tkn, qty) <- flattenValue val, cs P.== policy]
 
--- | Check if all quantities are negative
+-- | Check if all token quantities are negative (i.e., all are being burned).
 {-# INLINEABLE allNegative #-}
 allNegative :: [(TokenName, Integer)] -> Bool
 allNegative [] = True
 allNegative ((_, qty):rest) = qty P.< 0 P.&& allNegative rest
 
--- | Sum all token quantities for a given policy
+-- | Sum all token quantities for a given policy from a 'Value'.
+--
+-- Returns the total across all token names under the given 'CurrencySymbol'.
 {-# INLINEABLE getTotalForPolicy #-}
 getTotalForPolicy :: Value -> CurrencySymbol -> Integer
 getTotalForPolicy val policy =
   sumQty [qty | (cs, _, qty) <- flattenValue val, cs P.== policy]
 
--- | Sum a list of integers
+-- | Sum a list of integers (PlutusTx-compatible fold).
 {-# INLINEABLE sumQty #-}
 sumQty :: [Integer] -> Integer
 sumQty []     = 0
@@ -468,7 +494,7 @@ sumQty (x:xs) = x P.+ sumQty xs
 -- CATEGORY VALIDATION
 --------------------------------------------------------------------------------
 
--- | Check if a category is in the list of supported categories
+-- | Check if a category is in the list of supported categories (linear search).
 {-# INLINEABLE isCategorySupported #-}
 isCategorySupported :: BuiltinByteString -> [BuiltinByteString] -> Bool
 isCategorySupported _ [] = False

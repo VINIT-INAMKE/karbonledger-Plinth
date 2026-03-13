@@ -100,19 +100,15 @@ import           Carbonica.Validators.Common    (findInputByOutRef,
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | User Vault spending validator
+-- | User Vault spending validator.
 --
 --   Parameters:
 --     cetPolicy - CET policy ID (to verify burning)
 --     cotPolicy - COT policy ID (to verify offsetting)
 --
---   Action 0 (VaultOffset): Offset emissions by burning CET and COT
---     1. CET qty < 0 (burning)
---     2. CET qty == COT qty (1:1 ratio)
---     3. Remaining tokens sent back to user's script address
---
---   Action 1 (VaultWithdraw): Not yet implemented (fails)
+--   VaultOffset: owner signs, CET/COT burned 1:1, remainder returned.
+--   VaultWithdraw: intentionally disabled pending V2-02.
+{-# INLINEABLE typedValidator #-}
 typedValidator :: CurrencySymbol -> CurrencySymbol -> ScriptContext -> Bool
 typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
   SpendingScript oref (Just (Datum datumData)) ->
@@ -256,6 +252,9 @@ typedValidator cetPolicy cotPolicy ctx = case scriptInfo of
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the User Vault spending validator.
+--
+-- First arg: cetPolicy. Second arg: cotPolicy. Third arg: ScriptContext.
 {-# INLINEABLE untypedValidator #-}
 untypedValidator :: BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator cetPolicyData cotPolicyData ctxData =
@@ -266,5 +265,6 @@ untypedValidator cetPolicyData cotPolicyData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
+-- | Compiled UPLC code for on-chain deployment of the User Vault validator.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])

@@ -106,11 +106,16 @@ import           Carbonica.Validators.Common    (extractDatum,
 -- REDEEMER
 --------------------------------------------------------------------------------
 
+-- | Redeemer for COT minting policy.
 data CotRedeemer = CotRedeemer
   { cotAction :: Integer
+  -- ^ Action: 0 = mint with project, 1 = burn
   , cotOref   :: TxOutRef
+  -- ^ Reference to the project UTxO (for mint action)
   , cotAmount :: Integer
+  -- ^ Amount of COT tokens (for mint action)
   , cotTkn    :: TokenName
+  -- ^ Token name for the COT tokens
   }
   deriving stock (Generic)
   deriving anyclass (HasBlueprintDefinition)
@@ -121,13 +126,15 @@ PlutusTx.makeIsDataSchemaIndexed ''CotRedeemer [('CotRedeemer, 0)]
 -- VALIDATOR
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | COT minting policy (OPTIMIZED - Phase 2)
+-- | COT minting policy validator.
 --
---   Phase 2 Optimizations:
---     - Error codes (CPE000-CPE008) for minimal on-chain footprint
---     - Hoisted common extractions (inputs, refs, mint, sigs extracted once)
---     - INLINE pragmas for constants and frequently used values
+--   Parameters:
+--     cfgNft  - Identification NFT policy (to find ConfigDatum)
+--     valMint - Project NFT policy (to verify burning during mint)
+--
+--   Action 0 (Mint): project approved, project NFT burned, COT amount matches datum.
+--   Action 1 (Burn): multisig authorized, or CET/COT 1:1 burn.
+{-# INLINEABLE typedValidator #-}
 typedValidator :: CurrencySymbol -> CurrencySymbol -> ScriptContext -> Bool
 typedValidator cfgNft valMint ctx =
   let ScriptContext txInfo rawRed scriptInfo = ctx
@@ -260,13 +267,18 @@ typedValidator cfgNft valMint ctx =
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the COT minting policy.
+--
+-- First arg: cfgNft (ID NFT policy). Second arg: valMint (project policy).
+-- Third arg: ScriptContext.
 {-# INLINEABLE untypedValidator #-}
 untypedValidator :: BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit
-untypedValidator a b c = 
-  P.check (typedValidator 
-    (PlutusTx.unsafeFromBuiltinData a) 
-    (PlutusTx.unsafeFromBuiltinData b) 
+untypedValidator a b c =
+  P.check (typedValidator
+    (PlutusTx.unsafeFromBuiltinData a)
+    (PlutusTx.unsafeFromBuiltinData b)
     (PlutusTx.unsafeFromBuiltinData c))
 
+-- | Compiled UPLC code for on-chain deployment of the COT minting policy.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])

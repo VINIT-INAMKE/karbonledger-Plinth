@@ -108,8 +108,7 @@ import           Carbonica.Validators.Common    (allNegative,
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | Project Policy minting validator (OPTIMIZED - Phase 2)
+-- | Project Policy minting validator.
 --
 --   Parameters:
 --     idNftPolicy - Identification NFT policy (to find ConfigDatum)
@@ -124,11 +123,7 @@ import           Carbonica.Validators.Common    (allNegative,
 --
 --   Action 1 (Burn):
 --     - All tokens under policy must be burned (< 0)
---
---   Phase 2 Optimizations:
---     - Error codes (PPE000-PPE008) for minimal on-chain footprint
---     - Hoisted common extractions (outputs, mintedValue, config extracted once)
---     - INLINE pragmas for constants and frequently used values
+{-# INLINEABLE typedValidator #-}
 typedValidator :: CurrencySymbol -> ScriptContext -> Bool
 typedValidator idNftPolicy ctx =
   let ScriptContext txInfo rawRedeemer scriptInfo = ctx
@@ -303,6 +298,9 @@ typedValidator idNftPolicy ctx =
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the Project Policy minting validator.
+--
+-- First arg: idNftPolicy. Second arg: ScriptContext.
 {-# INLINEABLE untypedValidator #-}
 untypedValidator :: BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator idNftPolicyData ctxData =
@@ -312,5 +310,6 @@ untypedValidator idNftPolicyData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
+-- | Compiled UPLC code for on-chain deployment of the Project Policy.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])

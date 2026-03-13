@@ -142,11 +142,12 @@ PlutusTx.makeIsDataSchemaIndexed ''MarketplaceRedeemer
 -- CONSTANTS
 --------------------------------------------------------------------------------
 
--- | Royalty percentage (5% = 5/100)
+-- | Royalty percentage numerator (5% = 5\/100).
 royaltyNumerator :: Integer
 royaltyNumerator = 5
 {-# INLINEABLE royaltyNumerator #-}
 
+-- | Royalty percentage denominator (5% = 5\/100).
 royaltyDenominator :: Integer
 royaltyDenominator = 100
 {-# INLINEABLE royaltyDenominator #-}
@@ -155,21 +156,16 @@ royaltyDenominator = 100
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | Marketplace spending validator
+-- | Marketplace spending validator.
 --
 --   Parameters:
---     _idNftPolicy - (unused, for future config lookup if needed)
---     royaltyAddr  - Platform fee address
+--     _idNftPolicy - reserved for future config lookup
+--     royaltyAddr  - Platform fee address receiving royalty payments
 --
---   Buy action:
---     1. Calculate royalty: payout_amount = datum.amount * (100 - royalty) / 100
---     2. Calculate platform_fee = datum.amount * royalty / 100
---     3. Seller receives payout_amount
---     4. Platform receives platform_fee
---
---   Withdraw action:
---     1. Owner must sign
+--   Buy: price > 0, UTxO holds claimed COT, seller paid, platform gets royalty,
+--        buyer receives COT.
+--   Withdraw: owner must sign.
+{-# INLINEABLE typedValidator #-}
 typedValidator :: CurrencySymbol -> PubKeyHash -> ScriptContext -> Bool
 typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
   SpendingScript oref (Just (Datum datumData)) ->
@@ -310,6 +306,10 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the Marketplace spending validator.
+--
+-- First arg: idNftPolicy (reserved). Second arg: royaltyAddr.
+-- Third arg: ScriptContext.
 {-# INLINEABLE untypedValidator #-}
 untypedValidator :: BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator idNftPolicyData royaltyAddrData ctxData =
@@ -320,5 +320,6 @@ untypedValidator idNftPolicyData royaltyAddrData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
+-- | Compiled UPLC code for on-chain deployment of the Marketplace validator.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])

@@ -85,8 +85,7 @@ import           Carbonica.Validators.Common    (getTotalForPolicy)
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | CET minting policy validator
+-- | CET minting policy validator.
 --
 --   Parameters:
 --     userVaultHash - Script hash of the UserVault (to verify CET destination)
@@ -101,6 +100,7 @@ import           Carbonica.Validators.Common    (getTotalForPolicy)
 --   Burn rules (EmissionBurnRedeemer branch):
 --     1. CET qty < 0 (burning)
 --     2. CET qty == COT qty (both negative, same absolute value)
+{-# INLINEABLE typedValidator #-}
 typedValidator :: ScriptHash -> CurrencySymbol -> ScriptContext -> Bool
 typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
   MintingScript ownPolicy -> case redeemer of
@@ -233,6 +233,9 @@ typedValidator userVaultHash cotPolicy ctx = case scriptInfo of
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the CET minting policy.
+--
+-- First arg: userVaultHash. Second arg: cotPolicy. Third arg: ScriptContext.
 {-# INLINEABLE untypedValidator #-}
 untypedValidator :: BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator userVaultHashData cotPolicyData ctxData =
@@ -241,5 +244,6 @@ untypedValidator userVaultHashData cotPolicyData ctxData =
     (PlutusTx.unsafeFromBuiltinData cotPolicyData)
     (PlutusTx.unsafeFromBuiltinData ctxData))
 
+-- | Compiled UPLC code for on-chain deployment of the CET minting policy.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])

@@ -193,17 +193,12 @@ import           Carbonica.Types.Governance     (GovernanceDatum,
 -- MINTING POLICY (Submit/Burn proposals)
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE mintValidator #-}
--- | DAO Governance minting policy (OPTIMIZED - Phase 2)
---
---   Phase 2 Optimizations:
---     - Error codes (DGE000-DGE004) for minimal on-chain footprint
---     - Hoisted common extractions (outputs, signatories extracted once)
---     - INLINE pragmas for frequently used values
+-- | DAO Governance minting policy.
 --
 --   Minting Policy Rules:
 --     - SubmitProposal: submitter signs, output to script, InProgress state
---     - Other redeemers: fail
+--     - BurnProposal: multisig authorized
+{-# INLINEABLE mintValidator #-}
 mintValidator :: CurrencySymbol -> ScriptContext -> Bool
 mintValidator idNftPolicy ctx =
   let ScriptContext txInfo rawRedeemer scriptInfo = ctx
@@ -310,38 +305,15 @@ mintValidator idNftPolicy ctx =
 -- SPENDING VALIDATOR (Vote/Execute/Reject)
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE spendValidator #-}
--- | DAO Governance spending validator (OPTIMIZED - Phase 2)
---
---   Phase 2 Optimizations:
---     - Error codes (DGE005-DGE012) for minimal on-chain footprint
---     - Hoisted common extractions (signatories, refs, outputs extracted once)
---     - INLINE pragmas for constants and frequently used values
+-- | DAO Governance spending validator.
 --
 --   Spending Validator Rules:
---     Vote:
---       - proposal_id unchanged
---       - InProgress
---       - before deadline
---       - voter in multisig group
---       - voter status was Pending
---       - vote count +1 in output
---       - voter status updated in output
---
---     Execute:
---       - proposal_id unchanged
---       - InProgress
---       - after deadline
---       - yes > no
---       - output state = Executed
---       - ConfigDatum update matches proposal action
---
---     Reject:
---       - proposal_id unchanged
---       - InProgress
---       - after deadline
---       - no >= yes
---       - output state = Rejected
+--     Vote:    proposal_id unchanged, InProgress, before deadline,
+--              voter in multisig, status was Pending, count +1.
+--     Execute: past deadline, yes > no, state -> Executed,
+--              ConfigDatum update matches proposal action.
+--     Reject:  past deadline, no >= yes, state -> Rejected.
+{-# INLINEABLE spendValidator #-}
 spendValidator :: CurrencySymbol -> ScriptContext -> Bool
 spendValidator idNftPolicy ctx =
   let ScriptContext txInfo rawRedeemer scriptInfo = ctx
@@ -725,6 +697,9 @@ spendValidator idNftPolicy ctx =
 -- COMPILED VALIDATORS
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the DAO minting policy.
+--
+-- First arg: idNftPolicy. Second arg: ScriptContext.
 {-# INLINEABLE untypedMintValidator #-}
 untypedMintValidator :: BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedMintValidator idNftPolicyData ctxData =
@@ -734,9 +709,13 @@ untypedMintValidator idNftPolicyData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
+-- | Compiled UPLC code for on-chain deployment of the DAO minting policy.
 compiledMintValidator :: CompiledCode (BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledMintValidator = $$(PlutusTx.compile [||untypedMintValidator||])
 
+-- | Untyped entry point for the DAO spending validator.
+--
+-- First arg: idNftPolicy. Second arg: ScriptContext.
 {-# INLINEABLE untypedSpendValidator #-}
 untypedSpendValidator :: BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedSpendValidator idNftPolicyData ctxData =
@@ -746,5 +725,6 @@ untypedSpendValidator idNftPolicyData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
+-- | Compiled UPLC code for on-chain deployment of the DAO spending validator.
 compiledSpendValidator :: CompiledCode (BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledSpendValidator = $$(PlutusTx.compile [||untypedSpendValidator||])

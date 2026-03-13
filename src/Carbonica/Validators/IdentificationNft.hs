@@ -75,8 +75,7 @@ PlutusTx.makeIsDataSchemaIndexed ''IdNftRedeemer [('IdMint, 0), ('IdBurn, 1)]
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | Identification NFT minting policy
+-- | Identification NFT minting policy.
 --
 --   Parameters:
 --     oref - The specific UTxO that must be consumed to mint (one-shot)
@@ -87,6 +86,7 @@ PlutusTx.makeIsDataSchemaIndexed ''IdNftRedeemer [('IdMint, 0), ('IdBurn, 1)]
 --
 --   Burn rules:
 --     - Must burn exactly 1 token
+{-# INLINEABLE typedValidator #-}
 typedValidator :: TxOutRef -> ScriptContext -> Bool
 typedValidator oref ctx = case scriptInfo of
   MintingScript ownPolicy -> case redeemer of
@@ -135,9 +135,11 @@ typedValidator oref ctx = case scriptInfo of
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the Identification NFT minting policy.
+--
+-- First arg: serialized 'TxOutRef' (one-shot parameter).
+-- Second arg: serialized 'ScriptContext'.
 {-# INLINEABLE untypedValidator #-}
--- | Untyped wrapper for the validator
---   Takes serialized oref parameter
 untypedValidator :: BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator orefData ctxData =
   P.check
@@ -146,6 +148,6 @@ untypedValidator orefData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
--- | Compile the validator to Plutus Core
+-- | Compiled UPLC code for on-chain deployment of the Identification NFT policy.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])

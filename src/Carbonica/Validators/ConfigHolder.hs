@@ -89,8 +89,7 @@ PlutusTx.makeIsDataSchemaIndexed ''ConfigHolderRedeemer [('ConfigUpdate, 0)]
 -- VALIDATOR LOGIC
 --------------------------------------------------------------------------------
 
-{-# INLINEABLE typedValidator #-}
--- | Config Holder spending validator (OPTIMIZED - Phase 2)
+-- | Config Holder spending validator.
 --
 --   Parameters:
 --     idNftPolicy - The Identification NFT policy ID (to verify ownership)
@@ -102,12 +101,7 @@ PlutusTx.makeIsDataSchemaIndexed ''ConfigHolderRedeemer [('ConfigUpdate, 0)]
 --     3. Verify input.proposal_state == InProgress
 --     4. Verify output.proposal_state == Executed
 --     5. ID NFT must remain in continuing output
---
---   Phase 2 Optimizations:
---     - Error codes (CHE000-CHE005) for minimal on-chain footprint
---     - Hoisted common extractions (inputs, outputs extracted once)
---     - Combined DAO input/output validation (single check, parse datums once)
---     - INLINE pragmas for constants
+{-# INLINEABLE typedValidator #-}
 typedValidator :: CurrencySymbol -> CurrencySymbol -> ScriptContext -> Bool
 typedValidator idNftPolicy daoPolicyId ctx =
   let ScriptContext txInfo rawRedeemer scriptInfo = ctx
@@ -190,8 +184,10 @@ typedValidator idNftPolicy daoPolicyId ctx =
 -- COMPILED VALIDATOR
 --------------------------------------------------------------------------------
 
+-- | Untyped entry point for the Config Holder spending validator.
+--
+-- First arg: idNftPolicy. Second arg: daoPolicyId. Third arg: ScriptContext.
 {-# INLINEABLE untypedValidator #-}
--- | Untyped wrapper for the validator
 untypedValidator :: BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit
 untypedValidator idNftPolicyData daoPolicyData ctxData =
   P.check
@@ -201,6 +197,6 @@ untypedValidator idNftPolicyData daoPolicyData ctxData =
         (PlutusTx.unsafeFromBuiltinData ctxData)
     )
 
--- | Compile the validator to Plutus Core
+-- | Compiled UPLC code for on-chain deployment of the Config Holder validator.
 compiledValidator :: CompiledCode (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
 compiledValidator = $$(PlutusTx.compile [||untypedValidator||])
