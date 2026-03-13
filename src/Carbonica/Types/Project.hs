@@ -144,6 +144,20 @@ data ProjectDatum = ProjectDatum
 PlutusTx.makeIsDataSchemaIndexed ''ProjectDatum [('ProjectDatum, 0)]
 PlutusTx.makeLift ''ProjectDatum
 
+instance P.Eq ProjectDatum where
+  {-# INLINEABLE (==) #-}
+  d1 == d2 =
+    pdProjectName' d1 P.== pdProjectName' d2
+    P.&& pdCategory' d1 P.== pdCategory' d2
+    P.&& pdDeveloper' d1 P.== pdDeveloper' d2
+    P.&& pdCotAmount' d1 P.== pdCotAmount' d2
+    P.&& pdDescription' d1 P.== pdDescription' d2
+    P.&& pdStatus' d1 P.== pdStatus' d2
+    P.&& pdYesVotes' d1 P.== pdYesVotes' d2
+    P.&& pdNoVotes' d1 P.== pdNoVotes' d2
+    P.&& pdVoters' d1 P.== pdVoters' d2
+    P.&& pdSubmittedAt' d1 P.== pdSubmittedAt' d2
+
 --------------------------------------------------------------------------------
 -- SMART CONSTRUCTORS
 --------------------------------------------------------------------------------

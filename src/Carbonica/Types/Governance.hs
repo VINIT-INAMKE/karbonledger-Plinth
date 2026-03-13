@@ -207,6 +207,10 @@ data VoteRecord = VoteRecord
 PlutusTx.makeIsDataSchemaIndexed ''VoteRecord [('VoteRecord, 0)]
 PlutusTx.makeLift ''VoteRecord
 
+instance P.Eq VoteRecord where
+  {-# INLINEABLE (==) #-}
+  (VoteRecord v1 s1) == (VoteRecord v2 s2) = v1 P.== v2 P.&& s1 P.== s2
+
 --------------------------------------------------------------------------------
 -- ERROR TYPES
 --------------------------------------------------------------------------------
@@ -265,6 +269,19 @@ data GovernanceDatum = GovernanceDatum
 
 PlutusTx.makeIsDataSchemaIndexed ''GovernanceDatum [('GovernanceDatum, 0)]
 PlutusTx.makeLift ''GovernanceDatum
+
+instance P.Eq GovernanceDatum where
+  {-# INLINEABLE (==) #-}
+  d1 == d2 =
+    gdProposalId' d1 P.== gdProposalId' d2
+    P.&& gdSubmittedBy' d1 P.== gdSubmittedBy' d2
+    P.&& gdAction' d1 P.== gdAction' d2
+    P.&& gdVotes' d1 P.== gdVotes' d2
+    P.&& gdYesCount' d1 P.== gdYesCount' d2
+    P.&& gdNoCount' d1 P.== gdNoCount' d2
+    P.&& gdAbstainCount' d1 P.== gdAbstainCount' d2
+    P.&& gdDeadline' d1 P.== gdDeadline' d2
+    P.&& gdState' d1 P.== gdState' d2
 
 --------------------------------------------------------------------------------
 -- SMART CONSTRUCTORS
@@ -404,8 +421,8 @@ gdState = gdState'
 --
 -- Uses Scott encoding for optimized on-chain representation
 data DaoSpendRedeemer
-  = DaoVote Vote
-  -- ^ Cast a vote on this proposal
+  = DaoVote PubKeyHash Vote
+  -- ^ Cast a vote on this proposal (voter PKH + vote direction)
   | DaoExecute
   -- ^ Execute the proposal (after deadline, if passed)
   | DaoReject

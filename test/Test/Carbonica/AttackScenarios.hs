@@ -63,6 +63,7 @@ import Carbonica.Types.Governance
     , VoterStatus (..)
     , DaoSpendRedeemer (..)
     , DaoMintRedeemer (..)
+    , gdDeadline
     )
 import Carbonica.Validators.CotPolicy (CotRedeemer (..))
 import Carbonica.Validators.Marketplace
@@ -319,7 +320,9 @@ mkDaoExecuteCtx signers inputGov outputGov inputCfg outputCfg =
         (singleton testIdNftPolicy (TokenName identificationTokenName) 1)
         (OutputDatum (Datum (toBuiltinData outputCfg)))
         Nothing
-      txInfo' = mkTxInfo signers [govInput] [govOutput, configOutput] [configRef] emptyValue
+      -- Execute requires after-deadline range
+      afterDeadlineRange = from (gdDeadline inputGov P.+ 1)
+      txInfo' = mkTxInfoWithRange afterDeadlineRange signers [govInput] [govOutput, configOutput] [configRef] emptyValue
   in mkSpendingCtx txInfo' (Redeemer (toBuiltinData DaoExecute)) govOref inputGovDatum
 
 -- | CRIT-03a: ActionUpdateFeeAmount but cdCategories also mutated
@@ -651,7 +654,7 @@ high02b_daoGovernanceUnauthorizedVoter =
       configRef = mkRefInputWithConfig testIdNftPolicy defaultConfig
       -- Eve signs but is not in multisig [alice, bob, charlie]
       txInfo' = mkTxInfo [eve] [govInput] [govOutput] [configRef] emptyValue
-      ctx = mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote VoteYes))) govOref inputDatumData
+      ctx = mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote eve VoteYes))) govOref inputDatumData
   in testAttackRejected2
        "HIGH-02b: DaoGovernance vote by non-multisig member (DGE008)"
        DaoGovernance.untypedSpendValidator
@@ -691,6 +694,8 @@ mkDaoFinalizeCtx signers red inputGov outputGov cfg =
         (singleton testProposalPolicy (TokenName "test_proposal_001") 1)
         (Datum (toBuiltinData outputGov))
       configRef = mkRefInputWithConfig testIdNftPolicy cfg
+      -- For Execute/Reject, use after-deadline range
+      afterDeadlineRange = from (gdDeadline inputGov P.+ 1)
       -- For Execute, we also need a config output; for Reject, just governance output
       outputs = case red of
         DaoExecute ->
@@ -701,7 +706,7 @@ mkDaoFinalizeCtx signers red inputGov outputGov cfg =
                 Nothing
           in [govOutput, configOutput]
         _ -> [govOutput]
-      txInfo' = mkTxInfo signers [govInput] outputs [configRef] emptyValue
+      txInfo' = mkTxInfoWithRange afterDeadlineRange signers [govInput] outputs [configRef] emptyValue
   in mkSpendingCtx txInfo' (Redeemer (toBuiltinData red)) govOref inputDatumData
 
 -- | Passed governance datum for execute (yes > no, past deadline)
@@ -840,17 +845,13 @@ mkDaoVoteCtx signers voter vote =
         (singleton testProposalPolicy (TokenName "test_proposal_001") 1)
         (Datum (toBuiltinData outputGov))
       configRef = mkRefInputWithConfig testIdNftPolicy defaultConfig
-      -- Valid range must start after deadline for 'before deadline validRange' to hold
-      voteRange = from (oneWeekMs P.+ 1000001)
-      txInfo' = mkTxInfoWithRange voteRange signers [govInput] [govOutput] [configRef] emptyValue
-  in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote vote))) govOref inputDatumData
+      -- Always-valid range: vote must happen before deadline, and 'always' satisfies that check
+      txInfo' = mkTxInfo signers [govInput] [govOutput] [configRef] emptyValue
+  in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote voter vote))) govOref inputDatumData
 
--- | HIGH-04a: Eve signs but claims to vote as alice (impersonation)
--- Eve is the first signer, so voter = eve. But the output records alice as
--- having voted -- the validator should reject because eve's VoteRecord
--- is not found (eve is not in the votes list at all, since DGE002 checks
--- txSignedBy for the first signer, and the first signer is eve who is not
--- in multisig).
+-- | HIGH-04a: Eve signs but redeemer declares alice as voter (impersonation)
+-- Redeemer says DaoVote alice VoteYes, but only eve signed.
+-- Validator rejects because txSignedBy checks alice specifically (DGE002).
 high04a_impersonateVoter :: TestTree
 high04a_impersonateVoter =
   let -- Eve signs the transaction but is not in the multisig
@@ -864,7 +865,7 @@ high04a_impersonateVoter =
 -- | HIGH-04b: No signer at all
 high04b_noSignerAtAll :: TestTree
 high04b_noSignerAtAll =
-  let -- No signers: voter extraction will fail with DGE002
+  let -- No signers: txSignedBy will fail for alice with DGE002
       inputGov = mkTestGovernanceDatum
         "test_proposal_001" alice (ActionUpdateFeeAmount 200_000_000)
         [VoteRecord alice VoterPending, VoteRecord bob VoterPending]
@@ -884,7 +885,7 @@ high04b_noSignerAtAll =
         (Datum (toBuiltinData outputGov))
       configRef = mkRefInputWithConfig testIdNftPolicy defaultConfig
       txInfo' = mkTxInfo [] [govInput] [govOutput] [configRef] emptyValue
-      ctx = mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote VoteYes))) govOref inputDatumData
+      ctx = mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote alice VoteYes))) govOref inputDatumData
   in testAttackRejected2
        "HIGH-04b: no signer at all (DGE002)"
        DaoGovernance.untypedSpendValidator
@@ -1201,13 +1202,16 @@ med04Tests = testGroup "MED-04: DaoGovernance vote non-vote field mutation"
 
 -- | Local helper: Build DaoGovernance vote spending context with given input/output datums
 mkDaoVoteSpendCtx
-  :: [PubKeyHash]     -- signers
+  :: [PubKeyHash]     -- signers (first signer is the voter)
   -> GovernanceDatum  -- input datum
   -> GovernanceDatum  -- output datum
   -> Vote             -- vote direction
   -> ScriptContext
 mkDaoVoteSpendCtx signers inputGov outputGov vote =
-  let govOref = TxOutRef (TxId "gov_utxo_id_000000000000000000") 0
+  let voter = case signers of
+        (s:_) -> s
+        []    -> alice  -- fallback for empty-signer tests
+      govOref = TxOutRef (TxId "gov_utxo_id_000000000000000000") 0
       inputDatumData = Datum (toBuiltinData inputGov)
       govInput = mkTxInInfo govOref
         (mkScriptTxOut "governance_script_hash_00000000"
@@ -1217,10 +1221,9 @@ mkDaoVoteSpendCtx signers inputGov outputGov vote =
         (singleton testProposalPolicy (TokenName "test_proposal_001") 1)
         (Datum (toBuiltinData outputGov))
       configRef = mkRefInputWithConfig testIdNftPolicy defaultConfig
-      -- Valid range must start after deadline for 'before deadline validRange' to hold
-      voteRange = from (oneWeekMs P.+ 1000001)
-      txInfo' = mkTxInfoWithRange voteRange signers [govInput] [govOutput] [configRef] emptyValue
-  in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote vote))) govOref inputDatumData
+      -- Always-valid range: vote must happen before deadline, and 'always' satisfies that check
+      txInfo' = mkTxInfo signers [govInput] [govOutput] [configRef] emptyValue
+  in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote voter vote))) govOref inputDatumData
 
 -- | Base input governance datum for MED-04 tests
 med04InputGov :: GovernanceDatum

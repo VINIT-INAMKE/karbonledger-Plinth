@@ -49,8 +49,8 @@ Reject Action:
             Fix: Verify redeemer structure matches DaoMintRedeemer schema
 
    DGE002 - Voter did not sign transaction
-            Cause: The voter's PubKeyHash is not in txInfoSignatories (verified via txSignedBy)
-            Fix: Ensure the specific voter signs the transaction
+            Cause: The voter PKH (from DaoVote redeemer) is not in txInfoSignatories
+            Fix: The voter declared in the redeemer must sign the transaction
 
    DGE003 - Output missing proposal NFT
             Cause: No output contains the proposal NFT being minted
@@ -240,6 +240,9 @@ mintValidator idNftPolicy ctx =
       -- PHASE 3: Action-specific validation
       -- ═══════════════════════════════════════════════════════════════
 
+      {-# INLINE mintValidRange #-}
+      mintValidRange = txInfoValidRange txInfo
+
       {-# INLINEABLE submitCheck #-}
       submitCheck :: CurrencySymbol -> P.BuiltinByteString -> Bool
       submitCheck ownPolicy proposalId =
@@ -266,6 +269,9 @@ mintValidator idNftPolicy ctx =
               P.Just govDatum ->
                 gdProposalId govDatum P.== proposalId
                 P.&& gdState govDatum P.== ProposalInProgress
+                -- On-chain deadline validation: deadline must be in the future
+                -- (deadline must NOT be before the transaction validity range)
+                P.&& P.not (before (gdDeadline govDatum) mintValidRange)
 
       {-# INLINEABLE burnCheck #-}
       burnCheck :: Bool
@@ -374,7 +380,7 @@ spendValidator idNftPolicy ctx =
       {-# INLINEABLE validateSpend #-}
       validateSpend :: GovernanceDatum -> Bool
       validateSpend inputDatum = case redeemer of
-        DaoVote vote    -> validateVote inputDatum vote
+        DaoVote voterPkh vote -> validateVote inputDatum voterPkh vote
         DaoExecute      -> validateExecute inputDatum
         DaoReject       -> validateReject inputDatum
 
@@ -389,8 +395,8 @@ spendValidator idNftPolicy ctx =
       --   6. output.votes[idx].status == Voted(vote)
       --------------------------------------------------------------------------------
       {-# INLINEABLE validateVote #-}
-      validateVote :: GovernanceDatum -> Vote -> Bool
-      validateVote inputDatum vote =
+      validateVote :: GovernanceDatum -> PubKeyHash -> Vote -> Bool
+      validateVote inputDatum voter vote =
         P.traceIfFalse "DGE009" (case outputDatum of { P.Nothing -> False; P.Just _ -> True })
         P.&& P.traceIfFalse "DGE009" proposalIdMatches
         P.&& P.traceIfFalse "DGE009" isInProgress
@@ -415,16 +421,12 @@ spendValidator idNftPolicy ctx =
           isInProgress = gdState inputDatum P.== ProposalInProgress
 
           deadline = gdDeadline inputDatum
-          beforeDeadline = before deadline validRange
+          -- FIX: deadline must NOT have passed yet (deadline is not before validity range)
+          beforeDeadline = P.not (before deadline validRange)
 
           -- Voter specifically signed (verified via txSignedBy)
+          -- voter comes from the redeemer (no longer derived from head of signatories)
           voterSigned = txSignedBy txInfo voter
-
-          -- Get voter (first signer)
-          voter :: PubKeyHash
-          voter = case signatories of
-            (s:_) -> s
-            []    -> P.traceError "DGE002"
 
           -- Voter must be in multisig group
           voterInMultisig :: Bool
@@ -496,7 +498,8 @@ spendValidator idNftPolicy ctx =
           isInProgress = gdState inputDatum P.== ProposalInProgress
 
           deadline = gdDeadline inputDatum
-          afterDeadline = P.not (before deadline validRange)
+          -- FIX: deadline must have passed (deadline is before validity range)
+          afterDeadline = before deadline validRange
 
           yesWins = gdYesCount inputDatum P.> gdNoCount inputDatum
           outputIsExecuted = gdState outDatum P.== ProposalExecuted
@@ -538,7 +541,8 @@ spendValidator idNftPolicy ctx =
           isInProgress = gdState inputDatum P.== ProposalInProgress
 
           deadline = gdDeadline inputDatum
-          afterDeadline = P.not (before deadline validRange)
+          -- FIX: deadline must have passed (deadline is before validity range)
+          afterDeadline = before deadline validRange
 
           noWins = gdNoCount inputDatum P.>= gdYesCount inputDatum
           outputIsRejected = gdState outDatum P.== ProposalRejected

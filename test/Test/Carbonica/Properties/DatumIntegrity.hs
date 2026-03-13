@@ -184,11 +184,14 @@ daoGovernanceVoteIntegrity = testGroup "DaoGovernance vote preserves non-vote fi
 mkDaoVoteIntegrityCtx
   :: GovernanceDatum   -- ^ Input datum
   -> GovernanceDatum   -- ^ Output datum
-  -> [PubKeyHash]      -- ^ Transaction signers
+  -> [PubKeyHash]      -- ^ Transaction signers (first signer is the voter)
   -> Vote              -- ^ Vote direction
   -> ScriptContext
 mkDaoVoteIntegrityCtx inputGov outputGov signers vote =
-  let govOref = TxOutRef (TxId "gov_utxo_id_000000000000000000") 0
+  let voter = case signers of
+        (s:_) -> s
+        []    -> alice  -- fallback for empty-signer tests
+      govOref = TxOutRef (TxId "gov_utxo_id_000000000000000000") 0
       inputDatumData = Datum (toBuiltinData inputGov)
       proposalNftVal = singleton testProposalPolicy (TokenName "test_proposal_001") 1
       -- Governance input (being spent)
@@ -201,7 +204,7 @@ mkDaoVoteIntegrityCtx inputGov outputGov signers vote =
       -- Config reference input
       configRef = mkRefInputWithConfig testIdNftPolicy defaultConfig
       txInfo' = mkTxInfo signers [govInput] [govOutput] [configRef] emptyValue
-  in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote vote))) govOref inputDatumData
+  in mkSpendingCtx txInfo' (Redeemer (toBuiltinData (DaoVote voter vote))) govOref inputDatumData
 
 -- | Base input governance datum for vote integrity tests.
 -- alice is submitter, ActionUpdateFeeAmount, 3 pending voters, deadline = oneWeekMs + 1M.

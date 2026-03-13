@@ -164,6 +164,21 @@ data ConfigDatum = ConfigDatum
 PlutusTx.makeLift ''ConfigDatum
 PlutusTx.makeIsDataSchemaIndexed ''ConfigDatum [('ConfigDatum, 0)]
 
+instance P.Eq ConfigDatum where
+  {-# INLINEABLE (==) #-}
+  d1 == d2 =
+    cdFeesAddress' d1 P.== cdFeesAddress' d2
+    P.&& cdFeesAmount' d1 P.== cdFeesAmount' d2
+    P.&& cdCategories' d1 P.== cdCategories' d2
+    P.&& cdMultisig' d1 P.== cdMultisig' d2
+    P.&& cdProposalDuration' d1 P.== cdProposalDuration' d2
+    P.&& cdProjectPolicyId' d1 P.== cdProjectPolicyId' d2
+    P.&& cdProjectVaultHash' d1 P.== cdProjectVaultHash' d2
+    P.&& cdVotingHash' d1 P.== cdVotingHash' d2
+    P.&& cdCotPolicyId' d1 P.== cdCotPolicyId' d2
+    P.&& cdCetPolicyId' d1 P.== cdCetPolicyId' d2
+    P.&& cdUserVaultHash' d1 P.== cdUserVaultHash' d2
+
 --------------------------------------------------------------------------------
 -- SMART CONSTRUCTORS
 --------------------------------------------------------------------------------

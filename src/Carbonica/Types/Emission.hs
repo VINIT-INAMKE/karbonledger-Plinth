@@ -97,6 +97,16 @@ data EmissionDatum = EmissionDatum
 PlutusTx.makeIsDataSchemaIndexed ''EmissionDatum [('EmissionDatum, 0)]
 PlutusTx.makeLift ''EmissionDatum
 
+instance P.Eq EmissionDatum where
+  {-# INLINEABLE (==) #-}
+  d1 == d2 =
+    edOwner' d1 P.== edOwner' d2
+    P.&& edCategory' d1 P.== edCategory' d2
+    P.&& edAmount' d1 P.== edAmount' d2
+    P.&& edDescription' d1 P.== edDescription' d2
+    P.&& edReportedAt' d1 P.== edReportedAt' d2
+    P.&& edOffset' d1 P.== edOffset' d2
+
 --------------------------------------------------------------------------------
 -- SMART CONSTRUCTORS
 --------------------------------------------------------------------------------
@@ -178,6 +188,13 @@ data CetDatum = CetDatum
 
 PlutusTx.makeIsDataSchemaIndexed ''CetDatum [('CetDatum, 0)]
 PlutusTx.makeLift ''CetDatum
+
+instance P.Eq CetDatum where
+  {-# INLINEABLE (==) #-}
+  d1 == d2 =
+    cetLocation' d1 P.== cetLocation' d2
+    P.&& cetQty' d1 P.== cetQty' d2
+    P.&& cetTime' d1 P.== cetTime' d2
 
 -- | Smart constructor for CetDatum
 --
