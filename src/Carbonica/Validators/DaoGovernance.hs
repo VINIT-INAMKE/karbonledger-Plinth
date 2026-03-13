@@ -119,6 +119,18 @@ Reject Action:
             Cause: Transaction signatories do not satisfy multisig threshold for proposal rejection
             Fix: Required number of authorized multisig members must sign before rejecting
 
+   DGE019 - Submitter changed during vote
+            Cause: gdSubmittedBy differs between input and output GovernanceDatum
+            Fix: Ensure vote transaction preserves the proposal submitter
+
+   DGE020 - Action changed during vote
+            Cause: gdAction differs between input and output GovernanceDatum
+            Fix: Ensure vote transaction preserves the proposal action
+
+   DGE021 - Deadline changed during vote
+            Cause: gdDeadline differs between input and output GovernanceDatum
+            Fix: Ensure vote transaction preserves the proposal deadline
+
    ══════════════════════════════════════════════════════════════════════════
 -}
 
@@ -168,6 +180,7 @@ import           Carbonica.Types.Governance     (GovernanceDatum,
                                                  DaoSpendRedeemer (..),
                                                  DaoMintRedeemer (..),
                                                  gdProposalId,
+                                                 gdSubmittedBy,
                                                  gdState,
                                                  gdDeadline,
                                                  gdVotes,
@@ -416,6 +429,9 @@ spendValidator idNftPolicy ctx =
         P.&& P.traceIfFalse "DGE009" outputStillInProgress
         P.&& P.traceIfFalse "DGE009" voteCountIncremented
         P.&& P.traceIfFalse "DGE009" voterStatusUpdated
+        P.&& P.traceIfFalse "DGE019" submitterUnchanged
+        P.&& P.traceIfFalse "DGE020" actionUnchanged
+        P.&& P.traceIfFalse "DGE021" deadlineUnchanged
         where
           -- Get output datum (required)
           outDatum :: GovernanceDatum
@@ -464,6 +480,16 @@ spendValidator idNftPolicy ctx =
           voterStatusUpdated = case findVoterRecord voter (gdVotes outDatum) of
             P.Nothing -> False
             P.Just vr -> vrStatus vr P.== VoterVoted vote
+
+          -- MED-04: Non-vote field integrity
+          submitterUnchanged :: Bool
+          submitterUnchanged = gdSubmittedBy outDatum P.== gdSubmittedBy inputDatum
+
+          actionUnchanged :: Bool
+          actionUnchanged = gdAction outDatum P.== gdAction inputDatum
+
+          deadlineUnchanged :: Bool
+          deadlineUnchanged = gdDeadline outDatum P.== gdDeadline inputDatum
 
       --------------------------------------------------------------------------------
       -- EXECUTE VALIDATION
