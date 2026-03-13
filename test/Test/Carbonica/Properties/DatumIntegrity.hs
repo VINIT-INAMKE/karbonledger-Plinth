@@ -42,7 +42,8 @@ import qualified Carbonica.Validators.DaoGovernance as DaoGovernance
 
 -- Import types
 import Carbonica.Types.Config
-    ( identificationTokenName
+    ( ConfigDatum
+    , identificationTokenName
     )
 import Carbonica.Types.Project
     ( ProjectDatum, ProjectStatus (..)
