@@ -147,6 +147,19 @@ PlutusTx.makeIsDataSchemaIndexed ''ProposalAction
   ]
 PlutusTx.makeLift ''ProposalAction
 
+instance P.Eq ProposalAction where
+  {-# INLINEABLE (==) #-}
+  ActionAddSigner pkh1            == ActionAddSigner pkh2            = pkh1 P.== pkh2
+  ActionRemoveSigner pkh1         == ActionRemoveSigner pkh2         = pkh1 P.== pkh2
+  ActionUpdateFeeAmount n1        == ActionUpdateFeeAmount n2        = n1 P.== n2
+  ActionUpdateFeeAddress pkh1     == ActionUpdateFeeAddress pkh2     = pkh1 P.== pkh2
+  ActionAddCategory cat1          == ActionAddCategory cat2          = cat1 P.== cat2
+  ActionRemoveCategory cat1       == ActionRemoveCategory cat2       = cat1 P.== cat2
+  ActionUpdateRequired n1         == ActionUpdateRequired n2         = n1 P.== n2
+  ActionUpdateProposalDuration d1 == ActionUpdateProposalDuration d2 = d1 P.== d2
+  ActionUpdateScriptHash f1 h1    == ActionUpdateScriptHash f2 h2    = f1 P.== f2 P.&& h1 P.== h2
+  _                               == _                               = False
+
 --------------------------------------------------------------------------------
 -- VOTER STATUS
 -- Tracks whether a voter has voted
