@@ -273,46 +273,57 @@ mkConfigDatum feeAddr (Lovelace feeAmt) categories multisig proposalDuration
 -- Public API to access ConfigDatum fields
 --------------------------------------------------------------------------------
 
+-- | Get the platform fee address as a raw 'PubKeyHash'.
 {-# INLINEABLE cdFeesAddress #-}
 cdFeesAddress :: ConfigDatum -> PubKeyHash
 cdFeesAddress = feeToPkh . cdFeesAddress'
 
+-- | Get the platform fee amount as a raw 'Integer' (lovelace).
 {-# INLINEABLE cdFeesAmount #-}
 cdFeesAmount :: ConfigDatum -> Integer
 cdFeesAmount = lovelaceValue . cdFeesAmount'
 
+-- | Get the list of supported project categories.
 {-# INLINEABLE cdCategories #-}
 cdCategories :: ConfigDatum -> [BuiltinByteString]
 cdCategories = cdCategories'
 
+-- | Get the multisig configuration (required count and signer list).
 {-# INLINEABLE cdMultisig #-}
 cdMultisig :: ConfigDatum -> Multisig
 cdMultisig = cdMultisig'
 
+-- | Get the proposal voting duration.
 {-# INLINEABLE cdProposalDuration #-}
 cdProposalDuration :: ConfigDatum -> POSIXTime
 cdProposalDuration = cdProposalDuration'
 
+-- | Get the Project NFT minting policy ID.
 {-# INLINEABLE cdProjectPolicyId #-}
 cdProjectPolicyId :: ConfigDatum -> BuiltinByteString
 cdProjectPolicyId = cdProjectPolicyId'
 
+-- | Get the Project Vault script hash.
 {-# INLINEABLE cdProjectVaultHash #-}
 cdProjectVaultHash :: ConfigDatum -> BuiltinByteString
 cdProjectVaultHash = cdProjectVaultHash'
 
+-- | Get the Voting Validator script hash.
 {-# INLINEABLE cdVotingHash #-}
 cdVotingHash :: ConfigDatum -> BuiltinByteString
 cdVotingHash = cdVotingHash'
 
+-- | Get the Carbon Offset Token (COT) minting policy ID.
 {-# INLINEABLE cdCotPolicyId #-}
 cdCotPolicyId :: ConfigDatum -> BuiltinByteString
 cdCotPolicyId = cdCotPolicyId'
 
+-- | Get the Carbon Emission Token (CET) minting policy ID.
 {-# INLINEABLE cdCetPolicyId #-}
 cdCetPolicyId :: ConfigDatum -> BuiltinByteString
 cdCetPolicyId = cdCetPolicyId'
 
+-- | Get the User Vault script hash.
 {-# INLINEABLE cdUserVaultHash #-}
 cdUserVaultHash :: ConfigDatum -> BuiltinByteString
 cdUserVaultHash = cdUserVaultHash'

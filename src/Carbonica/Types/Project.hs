@@ -238,42 +238,52 @@ mkProjectDatum name category developer cotAmt description status yesVotes noVote
 -- Public API to access ProjectDatum fields
 --------------------------------------------------------------------------------
 
+-- | Get the project name.
 {-# INLINEABLE pdProjectName #-}
 pdProjectName :: ProjectDatum -> BuiltinByteString
 pdProjectName = pdProjectName'
 
+-- | Get the project category (must be in ConfigDatum.cdCategories).
 {-# INLINEABLE pdCategory #-}
 pdCategory :: ProjectDatum -> BuiltinByteString
 pdCategory = pdCategory'
 
+-- | Get the developer's 'PubKeyHash' (unwrapped from 'DeveloperAddress').
 {-# INLINEABLE pdDeveloper #-}
 pdDeveloper :: ProjectDatum -> PubKeyHash
 pdDeveloper = developerToPkh . pdDeveloper'
 
+-- | Get the COT amount as a raw 'Integer' (unwrapped from 'CotAmount').
 {-# INLINEABLE pdCotAmount #-}
 pdCotAmount :: ProjectDatum -> Integer
 pdCotAmount = cotValue . pdCotAmount'
 
+-- | Get the project description or IPFS hash.
 {-# INLINEABLE pdDescription #-}
 pdDescription :: ProjectDatum -> BuiltinByteString
 pdDescription = pdDescription'
 
+-- | Get the current project status in the verification pipeline.
 {-# INLINEABLE pdStatus #-}
 pdStatus :: ProjectDatum -> ProjectStatus
 pdStatus = pdStatus'
 
+-- | Get the running count of approval votes.
 {-# INLINEABLE pdYesVotes #-}
 pdYesVotes :: ProjectDatum -> Integer
 pdYesVotes = pdYesVotes'
 
+-- | Get the running count of rejection votes.
 {-# INLINEABLE pdNoVotes #-}
 pdNoVotes :: ProjectDatum -> Integer
 pdNoVotes = pdNoVotes'
 
+-- | Get the list of validators who have voted.
 {-# INLINEABLE pdVoters #-}
 pdVoters :: ProjectDatum -> [PubKeyHash]
 pdVoters = pdVoters'
 
+-- | Get the submission timestamp.
 {-# INLINEABLE pdSubmittedAt #-}
 pdSubmittedAt :: ProjectDatum -> POSIXTime
 pdSubmittedAt = pdSubmittedAt'

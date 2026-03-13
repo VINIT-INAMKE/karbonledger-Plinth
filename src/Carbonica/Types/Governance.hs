@@ -61,8 +61,11 @@ import qualified PlutusTx.Prelude          as P
 -- Uses Scott encoding for 20-30% smaller on-chain representation (Plutus 1.1+)
 data Vote
   = VoteYes
+  -- ^ Vote in favour of the proposal
   | VoteNo
+  -- ^ Vote against the proposal
   | VoteAbstain
+  -- ^ Abstain from voting
   deriving stock (Generic, Show, Eq)
   deriving anyclass (HasBlueprintDefinition)
 
@@ -348,38 +351,47 @@ mkGovernanceDatum proposalId submitter action votes yesCount noCount abstainCoun
 -- Public API to access GovernanceDatum fields
 --------------------------------------------------------------------------------
 
+-- | Get the unique proposal identifier.
 {-# INLINEABLE gdProposalId #-}
 gdProposalId :: GovernanceDatum -> BuiltinByteString
 gdProposalId = gdProposalId'
 
+-- | Get the 'PubKeyHash' of the proposal submitter.
 {-# INLINEABLE gdSubmittedBy #-}
 gdSubmittedBy :: GovernanceDatum -> PubKeyHash
 gdSubmittedBy = gdSubmittedBy'
 
+-- | Get the proposed action to execute on the config.
 {-# INLINEABLE gdAction #-}
 gdAction :: GovernanceDatum -> ProposalAction
 gdAction = gdAction'
 
+-- | Get the list of vote records for this proposal.
 {-# INLINEABLE gdVotes #-}
 gdVotes :: GovernanceDatum -> [VoteRecord]
 gdVotes = gdVotes'
 
+-- | Get the running count of yes votes.
 {-# INLINEABLE gdYesCount #-}
 gdYesCount :: GovernanceDatum -> Integer
 gdYesCount = gdYesCount'
 
+-- | Get the running count of no votes.
 {-# INLINEABLE gdNoCount #-}
 gdNoCount :: GovernanceDatum -> Integer
 gdNoCount = gdNoCount'
 
+-- | Get the running count of abstain votes.
 {-# INLINEABLE gdAbstainCount #-}
 gdAbstainCount :: GovernanceDatum -> Integer
 gdAbstainCount = gdAbstainCount'
 
+-- | Get the voting deadline.
 {-# INLINEABLE gdDeadline #-}
 gdDeadline :: GovernanceDatum -> POSIXTime
 gdDeadline = gdDeadline'
 
+-- | Get the current proposal state (InProgress, Executed, or Rejected).
 {-# INLINEABLE gdState #-}
 gdState :: GovernanceDatum -> ProposalState
 gdState = gdState'
