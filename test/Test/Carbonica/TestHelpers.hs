@@ -126,12 +126,14 @@ import Carbonica.Validators.Marketplace
 
 -- | Newtype wrapper to avoid orphan Arbitrary PubKeyHash instance
 newtype ArbPubKeyHash = ArbPubKeyHash { unArbPkh :: PubKeyHash }
+  deriving (Show)
 
 instance Arbitrary ArbPubKeyHash where
   arbitrary = ArbPubKeyHash . PubKeyHash . fromString <$> vectorOf 28 (elements ['a'..'f'])
 
 -- | Newtype wrapper for POSIXTime generation
 newtype ArbPOSIXTime = ArbPOSIXTime { unArbTime :: POSIXTime }
+  deriving (Show)
 
 instance Arbitrary ArbPOSIXTime where
   arbitrary = ArbPOSIXTime . fromIntegral . getPositive <$> (arbitrary :: Gen (Positive Integer))
