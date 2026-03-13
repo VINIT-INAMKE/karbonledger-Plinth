@@ -20,15 +20,21 @@ import Control.Exception (evaluate, try, SomeException)
 
 import PlutusTx (toBuiltinData)
 import PlutusLedgerApi.V3
-    ( CurrencySymbol (..)
+    ( Address (..)
+    , CurrencySymbol (..)
+    , Credential (..)
     , Datum (..)
+    , OutputDatum (..)
     , PubKeyHash (..)
     , Redeemer (..)
+    , ScriptContext
+    , ScriptHash (..)
     , TokenName (..)
     , TxId (..)
+    , TxOut (..)
     , TxOutRef (..)
     )
-import PlutusLedgerApi.V1.Value (singleton)
+import PlutusLedgerApi.V1.Value (Value, singleton)
 import qualified PlutusTx.Prelude as P
 
 -- Import validators (qualified)
@@ -82,7 +88,7 @@ testOref :: TxOutRef
 testOref = TxOutRef (TxId "spent_utxo_id_00000000000000000") 0
 
 -- | Empty Value (no tokens)
-emptyValue :: PlutusLedgerApi.V1.Value.Value
+emptyValue :: Value
 emptyValue = mempty
 
 --------------------------------------------------------------------------------
@@ -108,7 +114,7 @@ mkProjectVaultVoteCtx
   :: ProjectDatum      -- ^ Input datum (on the UTxO being spent)
   -> ProjectDatum      -- ^ Output datum (on the continuing output)
   -> [PubKeyHash]      -- ^ Transaction signers
-  -> PlutusLedgerApi.V3.ScriptContext
+  -> ScriptContext
 mkProjectVaultVoteCtx inputDatum outputDatum signers =
   let inputDatumData = Datum (toBuiltinData inputDatum)
       projectNftVal = singleton testProjectPolicy (TokenName "Test Carbon Project") 1
@@ -182,7 +188,7 @@ mkDaoVoteIntegrityCtx
   -> GovernanceDatum   -- ^ Output datum
   -> [PubKeyHash]      -- ^ Transaction signers
   -> Vote              -- ^ Vote direction
-  -> PlutusLedgerApi.V3.ScriptContext
+  -> ScriptContext
 mkDaoVoteIntegrityCtx inputGov outputGov signers vote =
   let govOref = TxOutRef (TxId "gov_utxo_id_000000000000000000") 0
       inputDatumData = Datum (toBuiltinData inputGov)
@@ -329,7 +335,7 @@ mkDaoExecuteIntegrityCtx
   -> GovernanceDatum    -- ^ Output governance datum
   -> ConfigDatum        -- ^ Input config (ref input)
   -> ConfigDatum        -- ^ Output config (in outputs)
-  -> PlutusLedgerApi.V3.ScriptContext
+  -> ScriptContext
 mkDaoExecuteIntegrityCtx signers inputGov outputGov inputCfg outputCfg =
   let govOref = TxOutRef (TxId "gov_utxo_id_000000000000000000") 0
       inputGovDatum = Datum (toBuiltinData inputGov)
@@ -344,12 +350,12 @@ mkDaoExecuteIntegrityCtx signers inputGov outputGov inputCfg outputCfg =
       -- Config reference input (with ID NFT)
       configRef = mkRefInputWithConfig testIdNftPolicy inputCfg
       -- Config output (updated, with ID NFT)
-      configOutput = PlutusLedgerApi.V3.TxOut
-        (PlutusLedgerApi.V3.Address
-          (PlutusLedgerApi.V3.ScriptCredential (PlutusLedgerApi.V3.ScriptHash "config_holder_hash_00000000000"))
+      configOutput = TxOut
+        (Address
+          (ScriptCredential (ScriptHash "config_holder_hash_00000000000"))
           Nothing)
         (singleton testIdNftPolicy (TokenName identificationTokenName) 1)
-        (PlutusLedgerApi.V3.OutputDatum (Datum (toBuiltinData outputCfg)))
+        (OutputDatum (Datum (toBuiltinData outputCfg)))
         Nothing
       txInfo' = mkTxInfo signers [govInput] [govOutput, configOutput] [configRef] emptyValue
   in mkSpendingCtx txInfo' (Redeemer (toBuiltinData DaoExecute)) govOref inputGovDatum
