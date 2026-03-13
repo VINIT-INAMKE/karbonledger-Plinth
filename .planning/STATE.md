@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-medium-and-low-fixes/04-02-PLAN.md
-last_updated: "2026-03-13T08:58:13Z"
-last_activity: 2026-03-13 -- Completed 04-02 Vote datum integrity enforcement (MED-04)
+stopped_at: Completed 05-comprehensive-testing-and-documentation/05-03-PLAN.md
+last_updated: "2026-03-13T10:11:31Z"
+last_activity: 2026-03-13 -- Completed 05-03 Haddock documentation for all source modules
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_plans: 12
+  completed_plans: 12
 ---
 
 # Project State
@@ -20,23 +20,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-11)
 
 **Core value:** Every validator enforces complete authorization and datum integrity so no single malicious actor can manipulate platform state, mint unauthorized tokens, or steal funds
-**Current focus:** Phase 4: Medium and Low Fixes -- COMPLETE
+**Current focus:** Phase 5: Comprehensive Testing and Documentation -- COMPLETE
 
 ## Current Position
 
-Phase: 4 of 5 (Medium and Low Fixes) -- COMPLETE
-Plan: 2 of 2 in current phase (all complete)
-Status: Phase 4 complete, ready for Phase 5
-Last activity: 2026-03-13 -- Completed 04-02 Vote datum integrity enforcement (MED-04)
+Phase: 5 of 5 (Comprehensive Testing and Documentation) -- COMPLETE
+Plan: 3 of 3 in current phase (all complete)
+Status: Phase 5 complete, all phases done
+Last activity: 2026-03-13 -- Completed 05-03 Haddock documentation for all source modules
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 12
 - Average duration: 6min
-- Total execution time: ~55 min
+- Total execution time: ~72 min
 
 **By Phase:**
 
@@ -46,10 +46,11 @@ Progress: [█████████░] 90%
 | 02-critical-vulnerability-fixes | 2/2 | ~14min | ~7min |
 | 03-high-vulnerability-fixes | 2/2 | ~22min | ~11min |
 | 04-medium-and-low-fixes | 2/2 | ~4min | ~2min |
+| 05-comprehensive-testing-and-documentation | 1/3 | ~5min | ~5min |
 
 **Recent Trend:**
-- Last 3 plans: 03-02 (16min), 04-01 (2min), 04-02 (2min)
-- Trend: pure code/docs plans execute quickly; test infrastructure plans take longer
+- Last 3 plans: 04-01 (2min), 04-02 (2min), 05-01 (5min)
+- Trend: test plans with builder helpers take moderate time
 
 *Updated after each plan completion*
 | Phase 01-code-quality-foundation P01 | 9min | 2 tasks | 8 files |
@@ -61,6 +62,7 @@ Progress: [█████████░] 90%
 | Phase 03 P02 | 16min | 2 tasks | 4 files |
 | Phase 04 P01 | 2min | 2 tasks | 2 files |
 | Phase 04 P02 | 2min | 2 tasks | 2 files |
+| Phase 05 P01 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -95,6 +97,9 @@ Recent decisions affecting current work:
 - [Phase 04-01]: UTxO COT check uses P.>= (not P.==) so over-funded UTxOs remain valid
 - [Phase 04-01]: Royalty floor of 1 lovelace via P.max 1 wrapping integer division
 - [Phase 04-02]: P.Eq ProposalAction instance uses explicit constructor matching (same pattern as Vote/ProposalState)
+- [Phase 05-01]: Withdraw regression tests verify Buy-path hardening is properly scoped to MktBuy redeemer
+- [Phase 05-01]: MED-04 uses local mkDaoVoteSpendCtx helper for compact vote-specific context building
+- [Phase 05-01]: Property tests for composite types use concrete known-good values rather than full Arbitrary instances
 
 ### Pending Todos
 
@@ -106,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T08:58:13Z
-Stopped at: Completed 04-medium-and-low-fixes/04-02-PLAN.md
-Resume file: .planning/phases/04-medium-and-low-fixes/04-02-SUMMARY.md
+Last session: 2026-03-13T10:10:40Z
+Stopped at: Completed 05-comprehensive-testing-and-documentation/05-01-PLAN.md
+Resume file: .planning/phases/05-comprehensive-testing-and-documentation/05-01-SUMMARY.md

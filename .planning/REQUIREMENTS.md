@@ -42,8 +42,8 @@
 
 - [x] **TEST-01**: Set up Tasty test suite with tasty-hunit and tasty-quickcheck
 - [x] **TEST-02**: Add attack scenario tests for each critical vulnerability fix
-- [ ] **TEST-03**: Add attack scenario tests for each high vulnerability fix
-- [ ] **TEST-04**: Add property-based tests for all smart constructors
+- [x] **TEST-03**: Add attack scenario tests for each high vulnerability fix
+- [x] **TEST-04**: Add property-based tests for all smart constructors
 - [ ] **TEST-05**: Add datum integrity property tests for vote/config update validators
 
 ## v2 Requirements
@@ -85,8 +85,8 @@
 | QUAL-04 | Phase 1 | Complete |
 | TEST-01 | Phase 1 | Complete |
 | TEST-02 | Phase 3 | Complete |
-| TEST-03 | Phase 5 | Pending |
-| TEST-04 | Phase 5 | Pending |
+| TEST-03 | Phase 5 | Complete |
+| TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Pending |
 
 **Coverage:**

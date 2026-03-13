@@ -91,10 +91,10 @@ Plans:
   2. Every smart constructor (mkLovelace, mkCotAmount, mkCetAmount, mkPercentage, mkMultisig, mkConfigDatum, mkProjectDatum, mkGovernanceDatum) has QuickCheck property tests covering valid inputs, boundary values, and invalid input rejection
   3. Property-based tests verify datum integrity invariants: ProjectVault vote preserves non-vote fields, DaoGovernance vote preserves non-vote fields, verifyConfigUpdate preserves non-target fields
   4. All exported functions in Types/, Validators/Common.hs, and all validator modules have Haddock documentation with purpose and parameters
-**Plans:** 3 plans
+**Plans:** 3 plans (1/3 complete)
 
 Plans:
-- [ ] 05-01-PLAN.md -- MED-01 through MED-04 attack scenario tests and property-based tests for all 8 smart constructors
+- [x] 05-01-PLAN.md -- MED-01 through MED-04 attack scenario tests and property-based tests for all 8 smart constructors
 - [ ] 05-02-PLAN.md -- Datum integrity property tests (ProjectVault vote, DaoGovernance vote, verifyConfigUpdate) with QuickCheck
 - [ ] 05-03-PLAN.md -- Haddock documentation for all exported functions across Types/ and Validators/ modules
 
@@ -109,4 +109,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Critical Vulnerability Fixes | 2/2 | Complete | 2026-03-11 |
 | 3. High Vulnerability Fixes | 2/2 | Complete | 2026-03-12 |
 | 4. Medium and Low Fixes | 2/2 | Complete   | 2026-03-13 |
-| 5. Comprehensive Testing and Documentation | 0/3 | Planning complete | - |
+| 5. Comprehensive Testing and Documentation | 1/3 | In Progress | - |
