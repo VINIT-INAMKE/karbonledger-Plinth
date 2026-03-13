@@ -6,33 +6,90 @@ License     : Apache-2.0
 CET tokens represent carbon emissions that users report.
 They are non-transferable and locked in User Vaults.
 CETs can be offset by burning COT tokens.
+
+This module uses smart constructors to ensure EmissionDatum and CetDatum
+are always valid:
+  - Emission amount must be positive
+  - Offset must be non-negative and not exceed amount
+  - CET quantity must be positive
 -}
-module Carbonica.Types.Emission where
+module Carbonica.Types.Emission
+  ( -- * Types
+    EmissionDatum      -- Export type but NOT constructor
+  , CetDatum           -- Export type but NOT constructor
+
+    -- * Smart Constructors
+  , mkEmissionDatum
+  , mkCetDatum
+
+    -- * Getters
+  , edOwner
+  , edCategory
+  , edAmount
+  , edDescription
+  , edReportedAt
+  , edOffset
+  , cetLocation
+  , cetQty
+  , cetTime
+
+    -- * Errors
+  , EmissionError(..)
+
+    -- * Redeemers (constructors exported for pattern matching)
+  , EmissionBurnRedeemer(..)
+  , CetMintRedeemer(..)
+  , UserVaultRedeemer(..)
+  ) where
 
 import           GHC.Generics              (Generic)
 import           PlutusLedgerApi.V3        (BuiltinByteString, POSIXTime,
                                             PubKeyHash)
 import           PlutusTx
 import           PlutusTx.Blueprint
+import qualified PlutusTx.Prelude          as P
+
+--------------------------------------------------------------------------------
+-- ERROR TYPES
+--------------------------------------------------------------------------------
+
+-- | Errors that can occur when constructing emission types
+data EmissionError
+  = InvalidEmissionAmount Integer
+  -- ^ Emission amount must be positive
+  | InvalidOffset Integer Integer
+  -- ^ Offset (first) must be >= 0 and <= amount (second)
+  | InvalidCetQuantity Integer
+  -- ^ CET quantity must be positive
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (HasBlueprintDefinition)
+
+PlutusTx.makeIsDataSchemaIndexed ''EmissionError
+  [ ('InvalidEmissionAmount, 0)
+  , ('InvalidOffset, 1)
+  , ('InvalidCetQuantity, 2)
+  ]
 
 --------------------------------------------------------------------------------
 -- EMISSION RECORD
 --------------------------------------------------------------------------------
 
 -- | Datum for a CET emission record in User Vault
+--
+--   NOTE: Constructor is NOT exported - use 'mkEmissionDatum' instead.
 data EmissionDatum = EmissionDatum
-  { edOwner       :: PubKeyHash
+  { edOwner'       :: PubKeyHash
   -- ^ User who reported the emission
-  , edCategory    :: BuiltinByteString
+  , edCategory'    :: BuiltinByteString
   -- ^ Emission category (transport, energy, etc.)
-  , edAmount      :: Integer
-  -- ^ Amount of CET tokens (emission units)
-  , edDescription :: BuiltinByteString
+  , edAmount'      :: Integer
+  -- ^ Amount of CET tokens (emission units, guaranteed positive)
+  , edDescription' :: BuiltinByteString
   -- ^ Description or IPFS hash
-  , edReportedAt  :: POSIXTime
+  , edReportedAt'  :: POSIXTime
   -- ^ When the emission was reported
-  , edOffset      :: Integer
-  -- ^ Amount already offset by COT
+  , edOffset'      :: Integer
+  -- ^ Amount already offset by COT (guaranteed 0 <= offset <= amount)
   }
   deriving stock (Generic)
   deriving anyclass (HasBlueprintDefinition)
@@ -41,18 +98,79 @@ PlutusTx.makeIsDataSchemaIndexed ''EmissionDatum [('EmissionDatum, 0)]
 PlutusTx.makeLift ''EmissionDatum
 
 --------------------------------------------------------------------------------
+-- SMART CONSTRUCTORS
+--------------------------------------------------------------------------------
+
+-- | Smart constructor for EmissionDatum
+--
+-- Ensures:
+--   - Amount is positive
+--   - Offset is non-negative
+--   - Offset does not exceed amount
+{-# INLINEABLE mkEmissionDatum #-}
+mkEmissionDatum
+  :: PubKeyHash
+  -> BuiltinByteString
+  -> Integer
+  -> BuiltinByteString
+  -> POSIXTime
+  -> Integer
+  -> P.Either EmissionError EmissionDatum
+mkEmissionDatum owner category amount description reportedAt offset
+  | amount P.<= 0 = P.Left (InvalidEmissionAmount amount)
+  | offset P.< 0 P.|| offset P.> amount = P.Left (InvalidOffset offset amount)
+  | P.otherwise = P.Right $ EmissionDatum
+      { edOwner'       = owner
+      , edCategory'    = category
+      , edAmount'      = amount
+      , edDescription' = description
+      , edReportedAt'  = reportedAt
+      , edOffset'      = offset
+      }
+
+--------------------------------------------------------------------------------
+-- GETTERS
+--------------------------------------------------------------------------------
+
+{-# INLINEABLE edOwner #-}
+edOwner :: EmissionDatum -> PubKeyHash
+edOwner = edOwner'
+
+{-# INLINEABLE edCategory #-}
+edCategory :: EmissionDatum -> BuiltinByteString
+edCategory = edCategory'
+
+{-# INLINEABLE edAmount #-}
+edAmount :: EmissionDatum -> Integer
+edAmount = edAmount'
+
+{-# INLINEABLE edDescription #-}
+edDescription :: EmissionDatum -> BuiltinByteString
+edDescription = edDescription'
+
+{-# INLINEABLE edReportedAt #-}
+edReportedAt :: EmissionDatum -> POSIXTime
+edReportedAt = edReportedAt'
+
+{-# INLINEABLE edOffset #-}
+edOffset :: EmissionDatum -> Integer
+edOffset = edOffset'
+
+--------------------------------------------------------------------------------
 -- CET DATUM
 -- Used for minting CET tokens with emission metadata
 --------------------------------------------------------------------------------
 
 -- | Datum for CET minting
 --   Also serves as redeemer when minting
+--
+--   NOTE: Constructor is NOT exported - use 'mkCetDatum' instead.
 data CetDatum = CetDatum
-  { cetLocation :: BuiltinByteString
+  { cetLocation' :: BuiltinByteString
   -- ^ Geographical location of the emission
-  , cetQty      :: Integer
-  -- ^ Quantity of CET tokens to mint
-  , cetTime     :: Integer
+  , cetQty'      :: Integer
+  -- ^ Quantity of CET tokens to mint (guaranteed positive)
+  , cetTime'     :: Integer
   -- ^ Timestamp of the emission event
   }
   deriving stock (Generic)
@@ -60,6 +178,38 @@ data CetDatum = CetDatum
 
 PlutusTx.makeIsDataSchemaIndexed ''CetDatum [('CetDatum, 0)]
 PlutusTx.makeLift ''CetDatum
+
+-- | Smart constructor for CetDatum
+--
+-- Ensures:
+--   - Quantity is positive
+{-# INLINEABLE mkCetDatum #-}
+mkCetDatum
+  :: BuiltinByteString
+  -> Integer
+  -> Integer
+  -> P.Either EmissionError CetDatum
+mkCetDatum location qty time
+  | qty P.<= 0 = P.Left (InvalidCetQuantity qty)
+  | P.otherwise = P.Right $ CetDatum
+      { cetLocation' = location
+      , cetQty'      = qty
+      , cetTime'     = time
+      }
+
+-- CetDatum getters
+
+{-# INLINEABLE cetLocation #-}
+cetLocation :: CetDatum -> BuiltinByteString
+cetLocation = cetLocation'
+
+{-# INLINEABLE cetQty #-}
+cetQty :: CetDatum -> Integer
+cetQty = cetQty'
+
+{-# INLINEABLE cetTime #-}
+cetTime :: CetDatum -> Integer
+cetTime = cetTime'
 
 --------------------------------------------------------------------------------
 -- EMISSION BURN REDEEMER

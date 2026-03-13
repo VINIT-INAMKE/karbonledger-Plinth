@@ -227,7 +227,7 @@ typedValidator idNftPolicy ctx =
             P.Nothing -> False
             P.Just (txOut, _) ->
               case addressCredential (txOutAddress txOut) of
-                ScriptCredential sh -> getScriptHash sh P.== cdProjectVaultHash config
+                ScriptCredential (ScriptHash shBs) -> shBs P.== cdProjectVaultHash config
                 _                   -> False
 
           -- Project output must have inline datum

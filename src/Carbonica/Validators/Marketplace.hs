@@ -250,13 +250,13 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
         platformPaid :: Bool
         platformPaid = payoutAtLeast royaltyAddr royaltyAmount outputs
 
-        -- Buyer must receive the COT tokens
-        -- Buyer is identified as first signer who is NOT the seller
+        -- Buyer must receive COT tokens AND have signed the transaction.
+        -- We find the output with COT, verify recipient signed and is not seller.
+        -- This prevents signer-ordering attacks where a co-signer is misidentified as buyer.
         buyerReceivesCot :: Bool
-        buyerReceivesCot = case findBuyer signatories sellerPkh of
-          P.Nothing -> False  -- No buyer found
-          P.Just buyerPkh ->
-            hasTokenPayment buyerPkh (mdCotPolicy mktDatum) (mdCotToken mktDatum) (mdCotQty mktDatum) outputs
+        buyerReceivesCot = verifyCotGoesToSigner outputs
+          (mdCotPolicy mktDatum) (mdCotToken mktDatum) (mdCotQty mktDatum)
+          sellerPkh signatories
     {-# INLINEABLE validateBuy #-}
 
     --------------------------------------------------------------------------------
@@ -276,29 +276,21 @@ typedValidator _idNftPolicy royaltyAddr ctx = case scriptInfo of
     -- HELPERS
     --------------------------------------------------------------------------------
 
-    -- Find buyer: first signer who is NOT the seller
-    findBuyer :: [PubKeyHash] -> PubKeyHash -> P.Maybe PubKeyHash
-    findBuyer [] _ = P.Nothing
-    findBuyer (s:ss) seller =
-      if s P./= seller
-        then P.Just s
-        else findBuyer ss seller
-    {-# INLINEABLE findBuyer #-}
-
-    -- Verify token payment to a PubKeyHash address (at least expectedAmt)
-    -- Note: uses >= semantics, distinct from payoutTokenExact which uses ==
-    hasTokenPayment :: PubKeyHash -> CurrencySymbol -> TokenName -> Integer -> [TxOut] -> Bool
-    hasTokenPayment _ _ _ _ [] = False
-    hasTokenPayment pkh policy tkn expectedAmt (o:os) =
-      let addr = txOutAddress o
-          matchesPkh = case addressCredential addr of
-            PubKeyCredential pk -> pk P.== pkh
-            _                   -> False
-          tokenAmt = valueOf (txOutValue o) policy tkn
-      in if matchesPkh P.&& tokenAmt P.>= expectedAmt
-           then True
-           else hasTokenPayment pkh policy tkn expectedAmt os
-    {-# INLINEABLE hasTokenPayment #-}
+    -- Verify COT goes to a non-seller signer (output-first approach).
+    -- Finds the output with COT tokens, then verifies the recipient:
+    --   1. Is a PubKey address (not a script)
+    --   2. Is NOT the seller (no self-dealing)
+    --   3. Has signed the transaction (buyer consent)
+    verifyCotGoesToSigner :: [TxOut] -> CurrencySymbol -> TokenName -> Integer -> PubKeyHash -> [PubKeyHash] -> Bool
+    verifyCotGoesToSigner [] _ _ _ _ _ = False
+    verifyCotGoesToSigner (o:os) policy tkn expectedAmt seller sigs =
+      let tokenAmt = valueOf (txOutValue o) policy tkn
+      in if tokenAmt P.>= expectedAmt
+           then case addressCredential (txOutAddress o) of
+                  PubKeyCredential pk -> pk P./= seller P.&& isInList pk sigs
+                  _                   -> verifyCotGoesToSigner os policy tkn expectedAmt seller sigs
+           else verifyCotGoesToSigner os policy tkn expectedAmt seller sigs
+    {-# INLINEABLE verifyCotGoesToSigner #-}
 
 
 

@@ -1,119 +1,253 @@
 Build profile: -w ghc-9.6.6 -O1
 In order, the following will be built (use -v for more details):
- - smartcontracts-0.1.0.0 (test:carbonica-tests) (ephemeral targets)
-Preprocessing test suite 'carbonica-tests' for smartcontracts-0.1.0.0...
-Building test suite 'carbonica-tests' for smartcontracts-0.1.0.0...
+ - smartcontracts-1.0.2 (test:carbonica-tests) (ephemeral targets)
+Preprocessing test suite 'carbonica-tests' for smartcontracts-1.0.2...
+Building test suite 'carbonica-tests' for smartcontracts-1.0.2...
 Running 1 test suites...
 Test suite carbonica-tests: RUNNING...
 Carbonica Tests
   Type Tests
     Config Types
-      identificationTokenName is correct:                        OK
+      identificationTokenName is correct:                                   OK
     Governance Types
-      Vote values are distinct:                                  OK
-      ProposalState values are distinct:                         OK
-      ProposalState equality is reflexive:                       OK
+      Vote values are distinct:                                             OK
+      ProposalState values are distinct:                                    OK
+      ProposalState equality is reflexive:                                  OK
     Project Types
-      ProjectStatus values are distinct:                         OK
-      ProjectStatus equality is reflexive:                       OK
+      ProjectStatus values are distinct:                                    OK
+      ProjectStatus equality is reflexive:                                  OK
   Validator Logic Tests
     Identification NFT
-      One-shot principle: UTxO consumption required:             OK
-      Mint exactly 1 token enforced:                             OK
-      Mint exactly 1 token rejected for 2 tokens:                OK
-      Burn exactly 1 token enforced:                             OK
+      One-shot principle: UTxO consumption required:                        OK
+      Mint exactly 1 token enforced:                                        OK
+      Mint exactly 1 token rejected for 2 tokens:                           OK
+      Burn exactly 1 token enforced:                                        OK
     Config Holder
-      Requires DAO proposal for spending:                        OK
-      Config spending rejected without enough DAO signers:       OK
-      ID NFT must remain in output:                              OK
+      Requires DAO proposal for spending:                                   OK
+      Config spending rejected without enough DAO signers:                  OK
+      ID NFT must remain in output:                                         OK
     DAO Governance
-      Voting requires signer:                                    OK
-      Voting rejected when signer absent:                        OK
-      Double voting prevented:                                   OK
-      Quorum check: 3 of 5 required:                             OK
-      Quorum not reached with 2 votes:                           OK
-      Deadline enforcement required:                             OK
-      Deadline not yet passed:                                   OK
+      Voting requires signer:                                               OK
+      Voting rejected when signer absent:                                   OK
+      Double voting prevented:                                              OK
+      Quorum check: 3 of 5 required:                                        OK
+      Quorum not reached with 2 votes:                                      OK
+      Deadline enforcement required:                                        OK
+      Deadline not yet passed:                                              OK
     Project Flow
-      Project submission requires signer:                        OK
-      Project submission rejected without signer:                OK
-      Project approval requires quorum:                          OK
-      Project rejection on no quorum:                            OK
-      COT minting tied to project approval:                      OK
-      COT minting rejected for unsupported category:             OK
+      Project submission requires signer:                                   OK
+      Project submission rejected without signer:                           OK
+      Project approval requires quorum:                                     OK
+      Project rejection on no quorum:                                       OK
+      COT minting tied to project approval:                                 OK
+      COT minting rejected for unsupported category:                        OK
     Emission Tracking
-      CET minting requires signer:                               OK
-      CET minting rejected without signer:                       OK
-      CET burning requires COT burning:                          OK
-      CET/COT burn mismatch detected:                            OK
-      User vault is non-transferable:                            OK
-      Offset requires owner signature:                           OK
-      Offset rejected without owner signature:                   OK
+      CET minting requires signer:                                          OK
+      CET minting rejected without signer:                                  OK
+      CET burning requires COT burning:                                     OK
+      CET/COT burn mismatch detected:                                       OK
+      User vault is non-transferable:                                       OK
+      Offset requires owner signature:                                      OK
+      Offset rejected without owner signature:                              OK
   Common Helper Tests
     List Helpers
-      isInList finds element present in list:                    OK
-      isInList returns False for absent element:                 OK
-      isInList returns False for empty list:                     OK
-      countMatching counts correct number of matches:            OK
-      countMatching returns 0 for no matches:                    OK
-      countMatching handles empty first list:                    OK
-      anySignerInList returns True when at least one match:      OK
-      anySignerInList returns False when no match:               OK
+      isInList finds element present in list:                               OK
+      isInList returns False for absent element:                            OK
+      isInList returns False for empty list:                                OK
+      countMatching counts correct number of matches:                       OK
+      countMatching returns 0 for no matches:                               OK
+      countMatching handles empty first list:                               OK
+      anySignerInList returns True when at least one match:                 OK
+      anySignerInList returns False when no match:                          OK
     Multisig Validation
-      validateMultisig passes with exactly required signers:     OK
-      validateMultisig passes with more than required:           OK
-      validateMultisig fails with fewer than required:           OK
-      validateMultisig fails with 0 signers:                     OK
-      validateMultisig ignores unauthorized signers:             OK
+      validateMultisig passes with exactly required signers:                OK
+      validateMultisig passes with more than required:                      OK
+      validateMultisig fails with fewer than required:                      OK
+      validateMultisig fails with 0 signers:                                OK
+      validateMultisig ignores unauthorized signers:                        OK
     Multisig Equality (P.Eq)
-      equal multisigs return True:                               OK
-      different msRequired returns False:                        OK
-      different msSigners returns False:                         OK
-      empty signers list equality:                               OK
-      different length signers returns False:                    OK
+      equal multisigs return True:                                          OK
+      different msRequired returns False:                                   OK
+      different msSigners returns False:                                    OK
+      empty signers list equality:                                          OK
+      different length signers returns False:                               OK
     Value Helpers
-      sumQty sums positive integers correctly:                   OK
-      sumQty returns 0 for empty list:                           OK
-      sumQty handles mix of positive and negative:               OK
-      allNegative returns True for all-negative list:            OK
-      allNegative returns False if any non-negative:             OK
-      allNegative returns True for empty list:                   OK
-      isCategorySupported finds category in list:                OK
-      isCategorySupported returns False for absent category:     OK
-      isCategorySupported returns False for empty category list: OK
+      sumQty sums positive integers correctly:                              OK
+      sumQty returns 0 for empty list:                                      OK
+      sumQty handles mix of positive and negative:                          OK
+      allNegative returns True for all-negative list:                       OK
+      allNegative returns False if any non-negative:                        OK
+      allNegative returns True for empty list:                              OK
+      isCategorySupported finds category in list:                           OK
+      isCategorySupported returns False for absent category:                OK
+      isCategorySupported returns False for empty category list:            OK
     Common Helper Properties
-      sumQty of singleton is identity:                           OK
+      sumQty of singleton is identity:                                      OK
         +++ OK, passed 100 tests.
-      sumQty of two elements is commutative:                     OK
+      sumQty of two elements is commutative:                                OK
         +++ OK, passed 100 tests.
-      validateMultisig with 0 required always passes:            OK
+      validateMultisig with 0 required always passes:                       OK
         +++ OK, passed 100 tests.
-      allNegative rejects list with any zero:                    OK
+      allNegative rejects list with any zero:                               OK
         +++ OK, passed 100 tests.
   Property-Based Tests (QuickCheck)
     Lovelace Smart Constructor Properties
-      Positive lovelace accepted:                                OK
+      Positive lovelace accepted:                                           OK
         +++ OK, passed 100 tests.
-      Zero lovelace accepted:                                    OK
+      Zero lovelace accepted:                                               OK
         +++ OK, passed 100 tests.
-      Negative lovelace rejected:                                OK
+      Negative lovelace rejected:                                           OK
         +++ OK, passed 100 tests.
-      Non-negative amounts accepted:                             OK
+      Non-negative amounts accepted:                                        OK
         +++ OK, passed 100 tests.
     CotAmount Smart Constructor Properties
-      Positive COT amount accepted:                              OK
+      Positive COT amount accepted:                                         OK
         +++ OK, passed 100 tests.
-      Zero COT amount accepted:                                  OK
+      Zero COT amount accepted:                                             OK
         +++ OK, passed 100 tests.
-      Negative COT amount rejected:                              OK
+      Negative COT amount rejected:                                         OK
         +++ OK, passed 100 tests.
-      CotAmount preserves value:                                 OK
+      CotAmount preserves value:                                            OK
         +++ OK, passed 100 tests.
-      Non-negative COT amounts accepted:                         OK
+      Non-negative COT amounts accepted:                                    OK
+        +++ OK, passed 100 tests.
+    CetAmount Smart Constructor Properties
+      Positive CET amount accepted:                                         OK
+        +++ OK, passed 100 tests.
+      Zero CET amount accepted:                                             OK
+        +++ OK, passed 100 tests.
+      Negative CET amount rejected:                                         OK
+        +++ OK, passed 100 tests.
+      CetAmount preserves value:                                            OK
+        +++ OK, passed 100 tests.
+    Percentage Smart Constructor Properties
+      Zero percentage accepted:                                             OK
+        +++ OK, passed 100 tests.
+      100 percentage accepted:                                              OK
+        +++ OK, passed 100 tests.
+      Range [0,100] accepted:                                               OK
+        +++ OK, passed 100 tests.
+      Above 100 rejected:                                                   OK
+        +++ OK, passed 100 tests.
+      Negative rejected:                                                    OK
+        +++ OK, passed 100 tests.
+      Percentage preserves value:                                           OK
+        +++ OK, passed 100 tests.
+    Multisig Smart Constructor Properties
+      Valid multisig accepted:                                              OK
+        +++ OK, passed 100 tests.
+      Empty signers rejected:                                               OK
+        +++ OK, passed 100 tests.
+      Zero required rejected:                                               OK
+        +++ OK, passed 100 tests.
+      Excess required rejected:                                             OK
+        +++ OK, passed 100 tests.
+      Required == length accepted:                                          OK
+        +++ OK, passed 100 tests.
+    ConfigDatum Smart Constructor Properties
+      Valid config accepted:                                                OK
+        +++ OK, passed 100 tests.
+      Zero fee rejected:                                                    OK
+        +++ OK, passed 100 tests.
+      Empty categories rejected:                                            OK
+        +++ OK, passed 100 tests.
+      Config preserves fee:                                                 OK
+        +++ OK, passed 100 tests.
+    ProjectDatum Smart Constructor Properties
+      Valid project accepted:                                               OK
+        +++ OK, passed 100 tests.
+      Empty name rejected:                                                  OK
+        +++ OK, passed 100 tests.
+      Zero COT rejected:                                                    OK
+        +++ OK, passed 100 tests.
+      Negative yes votes rejected:                                          OK
+        +++ OK, passed 100 tests.
+      Project preserves name:                                               OK
+        +++ OK, passed 100 tests.
+    GovernanceDatum Smart Constructor Properties
+      Valid governance datum accepted:                                      OK
+        +++ OK, passed 100 tests.
+      Empty proposal ID rejected:                                           OK
+        +++ OK, passed 100 tests.
+      Negative yes count rejected:                                          OK
+        +++ OK, passed 100 tests.
+      Negative no count rejected:                                           OK
+        +++ OK, passed 100 tests.
+      Governance preserves proposal ID:                                     OK
+        +++ OK, passed 100 tests.
+  Attack Scenario Tests
+    CRIT-01: ProjectVault vote datum manipulation
+      CRIT-01a: vote count manipulated by +2 (PVE013):                      OK
+      CRIT-01b: developer address mutated in output (PVE016):               OK
+      CRIT-01c: COT amount mutated in output (PVE017):                      OK
+      CRIT-01-positive: legitimate vote accepted:                           OK
+    CRIT-02: DaoGovernance mint without multisig
+      CRIT-02a: unauthorized signer submits proposal (DGE014):              OK
+      CRIT-02b: no signers at all (DGE014):                                 OK
+      CRIT-02-positive: authorized multisig members submit proposal:        OK
+    CRIT-03: DaoGovernance config field mutation
+      CRIT-03a: ActionUpdateFeeAmount but vault hash also mutated (DGE015): OK
+      CRIT-03b: ActionAddSigner but vault hash also mutated (DGE015):       OK
+      CRIT-03-positive: only target field changed accepted:                 OK
+    CRIT-04: CotPolicy unauthorized COT minting
+      CRIT-04a: project not approved but COT mint attempted (CPE009):       OK
+      CRIT-04b: minted COT amount differs from pdCotAmount (CPE010):        OK
+    HIGH-01: ProjectPolicy NFT sent to wrong script
+      HIGH-01a: NFT sent to wrong script hash (PPE007):                     OK
+      HIGH-01b: NFT sent to PubKey address instead of script (PPE007):      OK
+      HIGH-01c: NFT to correct script but missing inline datum (PPE009):    OK
+      HIGH-01-positive: NFT sent to correct vault with inline datum:        OK
+    HIGH-02: Trivial signer bypass
+      HIGH-02a: ProjectVault vote by non-multisig member (PVE005):          OK
+      HIGH-02b: DaoGovernance vote by non-multisig member (DGE008):         OK
+    HIGH-03: DaoGovernance execute/reject without multisig
+      HIGH-03a: execute with zero signers (DGE017):                         OK
+      HIGH-03b: execute with unauthorized signer (DGE017):                  OK
+      HIGH-03c: reject with zero signers (DGE018):                          OK
+      HIGH-03d: reject with unauthorized signer (DGE018):                   OK
+      HIGH-03-positive: execute with authorized multisig:                   OK
+    HIGH-04: DaoGovernance vote impersonation
+      HIGH-04a: eve signs but tries to impersonate alice (DGE002):          OK
+      HIGH-04b: no signer at all (DGE002):                                  OK
+      HIGH-04-positive: voter signs own transaction:                        OK
+    MED-01: Marketplace UTxO token verification
+      MED-01a: buy with empty UTxO (MKE007):                                OK
+      MED-01b: buy with wrong token in UTxO (MKE007):                       OK
+      MED-01-positive: buy with correct COT tokens accepted:                OK
+      MED-01-withdraw: owner withdrawal with empty UTxO accepted:           OK
+    MED-02: Marketplace zero/negative price
+      MED-02a: zero price buy (MKE008):                                     OK
+      MED-02b: negative price buy (MKE008):                                 OK
+      MED-02-positive: positive price buy accepted:                         OK
+      MED-02-withdraw: owner withdrawal of zero-price listing accepted:     OK
+    MED-03: Marketplace royalty rounding evasion
+      MED-03a: royalty rounding evasion (MKE004):                           OK
+      MED-03-positive: royalty floor paid accepted:                         OK
+      MED-03-withdraw: owner withdrawal without royalty accepted:           OK
+    MED-04: DaoGovernance vote non-vote field mutation
+      MED-04a: submitter mutated during vote (DGE019):                      OK
+      MED-04b: action mutated during vote (DGE020):                         OK
+      MED-04c: deadline mutated during vote (DGE021):                       OK
+      MED-04-positive: valid vote preserves all fields:                     OK
+  Datum Integrity Properties
+    ProjectVault vote preserves non-vote fields
+      rejects mutated developer (PVE016):                                   OK
+        +++ OK, passed 100 tests.
+      rejects mutated COT amount (PVE017):                                  OK
+        +++ OK, passed 100 tests.
+    DaoGovernance vote preserves non-vote fields
+      rejects mutated submitter (DGE019):                                   OK
+        +++ OK, passed 100 tests.
+      rejects mutated action (DGE020):                                      OK
+        +++ OK, passed 100 tests.
+      rejects mutated deadline (DGE021):                                    OK
+        +++ OK, passed 100 tests.
+    ConfigUpdate preserves non-target fields
+      execute rejects non-target field mutation (DGE015):                   OK
         +++ OK, passed 100 tests.
 
-All 73 tests passed (0.01s)
+All 149 tests passed (0.03s)
 Test suite carbonica-tests: PASS
 Test suite logged to:
-/home/vinit/code/karbonledger-Plinth/././dist-newstyle/build/x86_64-linux/ghc-9.6.6/smartcontracts-0.1.0.0/t/carbonica-tests/test/smartcontracts-0.1.0.0-carbonica-tests.log
+/home/vinit/code/karbonledger-Plinth/././dist-newstyle/build/x86_64-linux/ghc-9.6.6/smartcontracts-1.0.2/t/carbonica-tests/test/smartcontracts-1.0.2-carbonica-tests.log
 1 of 1 test suites (1 of 1 test cases) passed.

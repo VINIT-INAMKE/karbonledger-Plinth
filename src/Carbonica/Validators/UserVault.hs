@@ -90,7 +90,8 @@ import           PlutusLedgerApi.V1.Value       (Value, valueOf)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
-import           Carbonica.Types.Emission       (EmissionDatum (..),
+import           Carbonica.Types.Emission       (EmissionDatum,
+                                                 edOwner,
                                                  UserVaultRedeemer (..))
 import           Carbonica.Validators.Common    (findInputByOutRef,
                                                  getTokensForPolicy,

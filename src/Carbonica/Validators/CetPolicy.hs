@@ -77,7 +77,8 @@ import           PlutusLedgerApi.V1.Value       (Value, valueOf, flattenValue)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
-import           Carbonica.Types.Emission       (CetDatum (..),
+import           Carbonica.Types.Emission       (CetDatum,
+                                                 cetQty,
                                                  CetMintRedeemer (..))
 import           Carbonica.Validators.Common    (getTotalForPolicy)
 

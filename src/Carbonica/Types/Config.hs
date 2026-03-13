@@ -15,7 +15,8 @@ This module uses smart constructors to ensure ConfigDatum is always valid:
 module Carbonica.Types.Config
   ( -- * Types
     ConfigDatum       -- Export type but NOT constructor
-  , Multisig(..)      -- Export all for Multisig
+  , Multisig(..)      -- Constructor exported; safe because ConfigDatum hides its own
+                      -- constructor and mkConfigDatum validates Multisig invariants.
 
     -- * Smart Constructors
   , mkConfigDatum

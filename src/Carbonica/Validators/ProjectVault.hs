@@ -87,9 +87,9 @@ PHASE 4 OPTIMIZATIONS:
             Cause: Not enough multisig signatures
             Fix: Provide required number of multisig signatures
 
-   PVE013 - Vote count not incremented by exactly 1
-            Cause: output (pdYesVotes + pdNoVotes) != input (pdYesVotes + pdNoVotes) + 1
-            Fix: Exactly one vote must be added per transaction
+   PVE013 - Vote count not incremented correctly
+            Cause: Neither (yesVotes+1, noVotes same) nor (noVotes+1, yesVotes same)
+            Fix: Exactly one counter must increment by 1, the other must stay unchanged
 
    PVE014 - Voter not added to voters list
             Cause: output pdVoters length != input pdVoters length + 1
@@ -143,6 +143,7 @@ import           PlutusLedgerApi.V3             (CurrencySymbol (..),
                                                  getRedeemer)
 import           PlutusLedgerApi.V3.Contexts   (getContinuingOutputs, txSignedBy)
 import           PlutusLedgerApi.V3.MintValue   (mintValueMinted)
+import           PlutusLedgerApi.V1.Value       (valueOf)
 import           PlutusTx
 import qualified PlutusTx.Prelude               as P
 
@@ -167,7 +168,6 @@ import           Carbonica.Validators.Common    (anySignerInList,
                                                  countMatching,
                                                  extractDatum,
                                                  findConfigDatum,
-                                                 getTotalForPolicy,
                                                  payoutTokenExact)
 
 --------------------------------------------------------------------------------
@@ -277,9 +277,8 @@ typedValidator idNftPolicy projectPolicy ctx =
           isSubmitted = pdStatus projectDatum P.== ProjectSubmitted
 
           -- CRIT-01 FIX: Verify the continuing output datum matches expected state transition.
-          -- Uses total-count approach: pdYesVotes out + pdNoVotes out == pdYesVotes in + pdNoVotes in + 1
-          -- This enforces exactly one vote is added without needing to know vote direction,
-          -- since VaultVote carries no Vote payload.
+          -- Enforces exactly one counter incremented by 1, the other unchanged.
+          -- Prevents vote manipulation (e.g., +2 yes / -1 no netting to +1 total).
           {-# INLINE continuingOutputDatum #-}
           continuingOutputDatum :: P.Maybe ProjectDatum
           continuingOutputDatum = case getContinuingOutputs ctx of
@@ -291,10 +290,13 @@ typedValidator idNftPolicy projectPolicy ctx =
           outputDatumValid = case continuingOutputDatum of
             P.Nothing -> False
             P.Just outDatum ->
-              -- Vote count incremented by exactly 1 (total, direction-agnostic)
+              -- Vote count: exactly one counter +1, other unchanged
               P.traceIfFalse "PVE013"
-                (pdYesVotes outDatum P.+ pdNoVotes outDatum
-                 P.== pdYesVotes projectDatum P.+ pdNoVotes projectDatum P.+ 1)
+                ((pdYesVotes outDatum P.== pdYesVotes projectDatum P.+ 1
+                  P.&& pdNoVotes outDatum P.== pdNoVotes projectDatum)
+                 P.||
+                 (pdNoVotes outDatum P.== pdNoVotes projectDatum P.+ 1
+                  P.&& pdYesVotes outDatum P.== pdYesVotes projectDatum))
               -- Voter added to voters list (length +1)
               P.&& P.traceIfFalse "PVE014"
                 (listLength (pdVoters outDatum) P.== listLength (pdVoters projectDatum) P.+ 1)
@@ -335,7 +337,7 @@ typedValidator idNftPolicy projectPolicy ctx =
           projectTokenName = TokenName (pdProjectName projectDatum)
 
           {-# INLINE projectBurned #-}
-          projectBurned = getTotalForPolicy mintedValue projectPolicy P.< 0
+          projectBurned = valueOf mintedValue projectPolicy projectTokenName P.< 0
 
           {-# INLINE developerPaid #-}
           developerPaid =
@@ -372,8 +374,11 @@ typedValidator idNftPolicy projectPolicy ctx =
           {-# INLINE hasRejectionQuorum #-}
           hasRejectionQuorum = noVotes P.>= requiredVotes
 
+          {-# INLINE projectTokenName #-}
+          projectTokenName = TokenName (pdProjectName projectDatum)
+
           {-# INLINE projectBurned #-}
-          projectBurned = getTotalForPolicy mintedValue projectPolicy P.< 0
+          projectBurned = valueOf mintedValue projectPolicy projectTokenName P.< 0
 
           {-# INLINE multisigSatisfied #-}
           multisigSatisfied =
