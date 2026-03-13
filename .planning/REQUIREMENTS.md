@@ -29,7 +29,7 @@
 ### Low Fixes
 
 - [x] **LOW-01**: Standardize error handling to error codes across all validators (CetPolicy, UserVault, Marketplace)
-- [ ] **LOW-02**: Document VaultWithdraw as intentionally disabled with proper error code
+- [x] **LOW-02**: Document VaultWithdraw as intentionally disabled with proper error code
 
 ### Code Quality
 
@@ -73,12 +73,12 @@
 | HIGH-02 | Phase 3 | Complete |
 | HIGH-03 | Phase 3 | Complete |
 | HIGH-04 | Phase 3 | Complete |
-| MED-01 | Phase 4 | Pending |
-| MED-02 | Phase 4 | Pending |
-| MED-03 | Phase 4 | Pending |
+| MED-01 | Phase 4 | Complete |
+| MED-02 | Phase 4 | Complete |
+| MED-03 | Phase 4 | Complete |
 | MED-04 | Phase 4 | Complete |
 | LOW-01 | Phase 1 | Complete |
-| LOW-02 | Phase 4 | Pending |
+| LOW-02 | Phase 4 | Complete |
 | QUAL-01 | Phase 1 | Complete |
 | QUAL-02 | Phase 1 | Complete |
 | QUAL-03 | Phase 5 | Pending |
