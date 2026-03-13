@@ -42,7 +42,7 @@ patterns-established:
   - "Validator test structure: each group documents which Common.hs helpers the on-chain validator relies on"
   - "Negative assertion pattern: P.not (helperFunction ...) to verify rejection cases"
 
-requirements-completed: [TEST-01]
+requirements_completed: [TEST-01]
 
 duration: 5min
 completed: 2026-03-11

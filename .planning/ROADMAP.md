@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Code Quality Foundation** - Consolidate shared helpers, standardize error handling, set up test framework (completed 2026-03-11)
 - [x] **Phase 2: Critical Vulnerability Fixes** - Patch the 4 critical vulns: datum verification, auth bypass, config integrity, mint validation (completed 2026-03-11)
-- [ ] **Phase 3: High Vulnerability Fixes** - Fix NFT destination, trivial signer checks, governance auth gaps; add critical attack tests
+- [x] **Phase 3: High Vulnerability Fixes** - Fix NFT destination, trivial signer checks, governance auth gaps; add critical attack tests (completed 2026-03-12)
 - [x] **Phase 4: Medium and Low Fixes** - Harden marketplace validation, governance vote integrity, document disabled features (completed 2026-03-13)
 - [x] **Phase 5: Comprehensive Testing and Documentation** - Attack tests for high/medium fixes, property-based tests, Haddock documentation (completed 2026-03-13)
 
@@ -61,11 +61,11 @@ Plans:
   3. DaoGovernance validateExecute and validateReject both require at least one multisig signer (verified via txSignedBy) before allowing proposal finalization
   4. DaoGovernance vote verifies the specific voter PubKeyHash signed the transaction (not just that any signer exists)
   5. Attack scenario tests exist for all 4 critical vulnerabilities: each test constructs a malicious transaction exploiting the old vulnerability and confirms the patched validator rejects it
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 03-01-PLAN.md -- Patch HIGH-01 (ProjectPolicy NFT destination), HIGH-02/HIGH-04 (txSignedBy in DaoGovernance + ProjectVault), HIGH-03 (multisig in execute/reject)
-- [ ] 03-02-PLAN.md -- Create TestHelpers + AttackScenarios modules with attack tests for CRIT-01 through CRIT-04 and HIGH-01 through HIGH-04
+- [x] 03-01-PLAN.md -- Patch HIGH-01 (ProjectPolicy NFT destination), HIGH-02/HIGH-04 (txSignedBy in DaoGovernance + ProjectVault), HIGH-03 (multisig in execute/reject)
+- [x] 03-02-PLAN.md -- Create TestHelpers + AttackScenarios modules with attack tests for CRIT-01 through CRIT-04 and HIGH-01 through HIGH-04
 
 ### Phase 4: Medium and Low Fixes
 **Goal**: Marketplace cannot be exploited via fake listings, zero-price trades, or royalty evasion; governance vote datum integrity is fully enforced; disabled features are properly documented
@@ -80,7 +80,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md -- Harden Marketplace validateBuy (UTxO token verification, price floor, royalty floor) and document VaultWithdraw
-- [ ] 04-02-PLAN.md -- Add P.Eq ProposalAction instance and DaoGovernance vote non-vote field integrity checks
+- [x] 04-02-PLAN.md -- Add P.Eq ProposalAction instance and DaoGovernance vote non-vote field integrity checks
 
 ### Phase 5: Comprehensive Testing and Documentation
 **Goal**: Every fix category has attack scenario tests proving exploits are blocked, all smart constructors have property-based tests, datum integrity invariants are verified by properties, and all exported functions have Haddock documentation

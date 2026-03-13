@@ -40,7 +40,7 @@ patterns-established:
   - "UTxO content verification: findInputByOutRef + valueOf for checking spent UTxO contains claimed tokens"
   - "Royalty floor: P.max 1 wrapping integer division to prevent rounding evasion"
 
-requirements-completed: [MED-01, MED-02, MED-03, LOW-02]
+requirements_completed: [MED-01, MED-02, MED-03, LOW-02]
 
 # Metrics
 duration: 2min

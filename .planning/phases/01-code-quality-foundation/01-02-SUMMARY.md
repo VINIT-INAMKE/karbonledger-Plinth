@@ -36,7 +36,7 @@ patterns-established:
   - "Error registry format: block comment before module declaration, each code with cause/fix documentation"
   - "Error code namespace: CEE (CetPolicy), UVE (UserVault), MKE (Marketplace), INE (IdentificationNft) -- no conflicts with CHE/DGE/PVE/PPE/CPE"
 
-requirements-completed: [LOW-01]
+requirements_completed: [LOW-01]
 
 duration: 1min
 completed: 2026-03-11

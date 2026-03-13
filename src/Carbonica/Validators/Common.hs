@@ -49,9 +49,6 @@ module Carbonica.Validators.Common
   , countMatching
   , anySignerInList
 
-    -- * Token Name Generation
-  , tokenNameFromOref
-
     -- * Payout Verification
   , payoutExact
   , payoutAtLeast

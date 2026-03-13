@@ -46,7 +46,7 @@ patterns-established:
   - "Haddock comment goes before INLINEABLE pragma, before type signature"
   - "-- | for top-level function docs, -- ^ for record fields and constructor docs"
 
-requirements-completed: [QUAL-03]
+requirements_completed: [QUAL-03]
 
 # Metrics
 duration: 7min

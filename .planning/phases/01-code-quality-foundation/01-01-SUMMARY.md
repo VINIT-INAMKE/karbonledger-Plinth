@@ -47,7 +47,7 @@ patterns-established:
   - "Error registry format: block comment before module declaration, each code with cause/fix documentation"
   - "Common.hs import specificity: import only the specific helpers needed, not wildcard"
 
-requirements-completed: [QUAL-01, QUAL-02, QUAL-04]
+requirements_completed: [QUAL-01, QUAL-02, QUAL-04]
 
 duration: 9min
 completed: 2026-03-11

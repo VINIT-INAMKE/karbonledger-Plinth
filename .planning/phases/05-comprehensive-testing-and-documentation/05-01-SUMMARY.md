@@ -37,7 +37,7 @@ patterns-established:
   - "Withdraw regression pattern: each MED-01/02/03 includes a test using MktWithdraw on Buy-failing conditions to prove hardening does not leak"
   - "MED attack test pattern: 2-3 exploit variants + 1 positive + 1 Withdraw regression per Marketplace fix"
 
-requirements-completed: [TEST-03, TEST-04]
+requirements_completed: [TEST-03, TEST-04]
 
 # Metrics
 duration: 5min

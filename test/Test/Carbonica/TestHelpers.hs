@@ -58,6 +58,7 @@ import Test.Tasty.HUnit (testCase, assertFailure)
 import Test.QuickCheck (Arbitrary(..), Gen, Positive(..), elements, vectorOf)
 
 import Control.Exception (evaluate, try, SomeException)
+import Data.List (isInfixOf)
 import Data.String (fromString)
 
 import PlutusLedgerApi.V3
@@ -350,29 +351,39 @@ mkMarketplaceCtx signers mktDatum red utxoVal outs =
 -- testAttackAccepted* verifies that the validator ACCEPTS (returns BuiltinUnit).
 --------------------------------------------------------------------------------
 
--- | Test that a 2-arg untyped validator (param -> ctx -> BuiltinUnit) rejects an attack.
--- Used for: ProjectPolicy.untypedValidator, DaoGovernance.untypedMintValidator,
---           DaoGovernance.untypedSpendValidator
+-- | Test that a 2-arg untyped validator (param -> ctx -> BuiltinUnit) rejects an attack
+-- with a specific error code. Verifies the exception message contains the expected code,
+-- preventing false passes from unrelated failures (e.g., datum parse errors).
 testAttackRejected2
   :: String
   -> (BuiltinData -> BuiltinData -> P.BuiltinUnit)
-  -> BuiltinData -> BuiltinData -> TestTree
-testAttackRejected2 name validator param1 ctxData = testCase name $ do
+  -> String -> BuiltinData -> BuiltinData -> TestTree
+testAttackRejected2 name validator expectedCode param1 ctxData = testCase name $ do
   result <- try (evaluate (validator param1 ctxData)) :: IO (Either SomeException P.BuiltinUnit)
   case result of
-    Left _  -> return ()  -- P.check/traceError threw exception, attack rejected (PASS)
+    Left ex ->
+      let msg = show ex
+      in if expectedCode `isInfixOf` msg
+           then return ()
+           else assertFailure ("Validator rejected, but with wrong error. Expected '"
+                  ++ expectedCode ++ "' in: " ++ msg)
     Right _ -> assertFailure "Validator should have rejected the attack but returned successfully"
 
--- | Test that a 3-arg untyped validator (param1 -> param2 -> ctx -> BuiltinUnit) rejects.
--- Used for: ProjectVault.untypedValidator, CotPolicy.untypedValidator
+-- | Test that a 3-arg untyped validator (param1 -> param2 -> ctx -> BuiltinUnit) rejects
+-- with a specific error code.
 testAttackRejected3
   :: String
   -> (BuiltinData -> BuiltinData -> BuiltinData -> P.BuiltinUnit)
-  -> BuiltinData -> BuiltinData -> BuiltinData -> TestTree
-testAttackRejected3 name validator param1 param2 ctxData = testCase name $ do
+  -> String -> BuiltinData -> BuiltinData -> BuiltinData -> TestTree
+testAttackRejected3 name validator expectedCode param1 param2 ctxData = testCase name $ do
   result <- try (evaluate (validator param1 param2 ctxData)) :: IO (Either SomeException P.BuiltinUnit)
   case result of
-    Left _  -> return ()  -- P.check/traceError threw exception, attack rejected (PASS)
+    Left ex ->
+      let msg = show ex
+      in if expectedCode `isInfixOf` msg
+           then return ()
+           else assertFailure ("Validator rejected, but with wrong error. Expected '"
+                  ++ expectedCode ++ "' in: " ++ msg)
     Right _ -> assertFailure "Validator should have rejected the attack but returned successfully"
 
 -- | Test that a 2-arg untyped validator accepts a legitimate transaction.

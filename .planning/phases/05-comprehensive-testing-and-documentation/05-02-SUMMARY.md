@@ -35,7 +35,7 @@ patterns-established:
   - "ioProperty pattern: wrap validator calls in try/evaluate, return Bool for QuickCheck"
   - "Implication guard (==>) to exclude trivially-passing cases where mutation equals original"
 
-requirements-completed: [TEST-05]
+requirements_completed: [TEST-05]
 
 # Metrics
 duration: 4min

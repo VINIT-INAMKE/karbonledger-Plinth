@@ -30,7 +30,7 @@ key-decisions:
 patterns-established:
   - "Non-vote field integrity: validateVote now checks gdSubmittedBy, gdAction, gdDeadline preservation"
 
-requirements-completed: [MED-04]
+requirements_completed: [MED-04]
 
 # Metrics
 duration: 2min
