@@ -1,10 +1,10 @@
-# Carbonica - Carbon Emission Tracking Platform
+# KarbonLedger - Carbon Emission Tracking Platform
 
 A comprehensive Plutus V3 smart contract system for tracking, verifying, and offsetting carbon emissions on Cardano.
 
 ## 🌍 System Overview
 
-Carbonica is a decentralized carbon credit platform that enables:
+KarbonLedger is a decentralized carbon credit platform that enables:
 - **Emission Reporting**: Companies report carbon emissions and receive CET (Carbon Emission Tokens)
 - **Project Verification**: Offset projects are validated through DAO voting
 - **Carbon Offsetting**: CET holders can burn tokens by purchasing COT (Carbon Offset Tokens)
@@ -375,7 +375,7 @@ ConfigDatum
 
 ```
 ├── src/
-│   ├── Carbonica/
+│   ├── KarbonLedger/
 │   │   ├── Validators/
 │   │   │   ├── CetPolicy.hs           # CET minting/burning
 │   │   │   ├── CotPolicy.hs           # COT minting/burning
@@ -391,7 +391,7 @@ ConfigDatum
 │   │       ├── Project.hs             # Project types
 │   │       └── Governance.hs          # DAO types
 ├── test/
-│   └── Test/Carbonica/
+│   └── Test/KarbonLedger/
 │       ├── Unit/                      # Unit tests (24 tests)
 │       └── Properties/                # QuickCheck tests (9 properties)
 ├── app/
@@ -475,15 +475,15 @@ cabal test --test-show-details=streaming
 
 ### Adding New Validators
 
-1. Create validator file: `src/Carbonica/Validators/NewValidator.hs`
+1. Create validator file: `src/KarbonLedger/Validators/NewValidator.hs`
 2. Add to `smartcontracts.cabal` exposed-modules
 3. Update `app/GenBlueprint.hs` to include validator
-4. Add tests in `test/Test/Carbonica/Unit/` or `test/Test/Carbonica/Properties/`
+4. Add tests in `test/Test/KarbonLedger/Unit/` or `test/Test/KarbonLedger/Properties/`
 5. Run `make build && make test`
 
 ### Modifying Types
 
-1. Update type definition in `src/Carbonica/Types/`
+1. Update type definition in `src/KarbonLedger/Types/`
 2. Ensure `makeIsDataSchemaIndexed` or `unstableMakeIsData` present
 3. Update all validators using the type
 4. Run `make test` to verify changes
